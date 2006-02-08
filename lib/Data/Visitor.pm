@@ -131,7 +131,13 @@ implementation will just forward to C<visit_value>.
 
 =item visit_array $array_ref
 
-This method is called when the value is an array reference.
+=item visit_hash $hash_ref
+
+=item visit_glob $glob_ref
+
+=item visit_scalar $scalar_ref
+
+These methods are called for the corresponding container type.
 
 =item visit_value $value
 

@@ -144,7 +144,7 @@ Called for all values
 
 =item value
 
-Called for non objects, non aggregate (hash, array) values.
+Called for non objects, non container (hash, array, glob or scalar ref) values.
 
 =item ref_value
 
@@ -165,6 +165,14 @@ Called for array references.
 =item hash
 
 Called for hash references.
+
+=item glob
+
+Called for glob references.
+
+=item scalar
+
+Called for scalar references.
 
 =back
 
