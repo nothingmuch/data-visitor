@@ -166,7 +166,7 @@ children also fmapped.
 
 =head1 SUBCLASSING
 
-Create instance data using the L<Class::Accessor> interface. L<Data::Validator>
+Create instance data using the L<Class::Accessor> interface. L<Data::Visitor>
 inherits L<Class::Accessor> to get a sane C<new>.
 
 Then override the callback methods in any way you like. To retain visitor

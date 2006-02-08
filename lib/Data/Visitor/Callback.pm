@@ -111,7 +111,7 @@ The options supported are:
 
 When this is true (off by default) the return values from the callbacks are
 ignored, thus disabling the fmapping behavior as documented in
-L<Data::Validator>.
+L<Data::Visitor>.
 
 This is useful when you want to modify $_ directly
 
