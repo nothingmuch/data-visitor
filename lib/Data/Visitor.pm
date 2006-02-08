@@ -158,6 +158,20 @@ Then override the callback methods in any way you like. To retain visitor
 behavior, make sure to retain the functionality of C<visit_array> and
 C<visit_hash>.
 
+=head1 SEE ALSO
+
+L<Tree::Simple::VisitorFactory>, L<Data::Traverse>
+
+=head1 AUTHOR
+
+Yuval Kogman <nothingmuch@woobling.org>
+
+=head1 COPYRIGHT & LICENSE
+
+	Copyright (c) 2006 Yuval Kogman. All rights reserved
+	This program is free software; you can redistribute
+	it and/or modify it under the same terms as Perl itself.
+
 =cut
 
 
