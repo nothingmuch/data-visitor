@@ -1,0 +1,8 @@
+0.02
+	- Added GLOB recursion support
+	- Added support for circular references
+	_ Added aliasing to $_ to Data::Validator::Callback
+	- Added ignore_return_values to Data::Validator::Callback
+
+0.01
+	- Initial release

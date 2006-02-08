@@ -10,7 +10,7 @@ use Scalar::Util ();
 use overload ();
 use Symbol ();
 
-our $VERSION = "0.01";
+our $VERSION = "0.02";
 
 sub visit {
 	my ( $self, $data ) = @_;
