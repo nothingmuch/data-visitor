@@ -6,10 +6,15 @@ use base qw/Data::Visitor/;
 use strict;
 use warnings;
 
-__PACKAGE__->mk_accessors( "callbacks" );
+__PACKAGE__->mk_accessors( qw/callbacks ignore_return_values/ );
 
 sub new {
 	my ( $class, %callbacks ) = @_;
+
+	my $ignore_ret = 0;
+	if	( exists $callbacks{ignore_return_values} ) {
+		$ignore_ret = delete $callbacks{ignore_return_values};
+	}
 
 	my $self = $class->SUPER::new();
 
@@ -20,6 +25,7 @@ sub new {
 
 sub visit {
 	my ( $self, $data ) = @_;
+	local *_ = \$_[1]; # alias $_
 	$self->SUPER::visit( $self->callback( visit => $data ) );
 }
 
@@ -49,7 +55,8 @@ sub callback {
 	my ( $self, $name, $data ) = @_;
 
 	if ( my $code = $self->callbacks->{$name} ) {
-		return $code->( $self, $data );
+		my $ret = $code->( $self, $data );
+		return $self->ignore_return_values ? $data : $ret ;
 	} else {
 		return $data;
 	}
@@ -85,9 +92,23 @@ needing to subclass yourself.
 
 =over 4
 
-=item new %callbacks
+=item new %opts, %callbacks
 
+Construct a new visitor.
 
+The options supported are:
+
+=over 4
+
+=item ignore_return_values
+
+When this is true (off by default) the return values from the callbacks are
+ignored, thus disabling the fmapping behavior as documented in
+L<Data::Validator>.
+
+This is useful when you want to modify $_ directly
+
+=back
 
 =back
 
@@ -100,10 +121,13 @@ The callback is in the form:
 	sub {
 		my ( $visitor, $data ) = @_;
 
-		# ...
+		# or you can use $_, it's aliased
 
 		return $data; # or modified data
 	}
+
+Within the callback $_ is aliased to the data, and this is also passed in the
+parameter list.
 
 =over 4
 
