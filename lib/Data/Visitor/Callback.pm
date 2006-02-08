@@ -41,23 +41,20 @@ sub visit_object {
 	$self->callback( object => $data );
 }
 
-sub visit_hash {
-	my ( $self, $data ) = @_;
-	my $new_data = $self->callback( hash => $data );
-	if ( ref $data eq ref $new_data ) {
-		$self->SUPER::visit_hash( $new_data );
-	} else {
-		$self->SUPER::visit( $new_data );
-	}
-}
-
-sub visit_array {
-	my ( $self, $data ) = @_;
-	my $new_data = $self->callback( array => $data );
-	if ( ref $data eq ref $new_data ) {
-		$self->SUPER::visit_array( $new_data );
-	} else {
-		$self->SUPER::visit( $new_data );
+BEGIN {
+	foreach my $reftype ( qw/array hash glob/ ) {
+		no strict 'refs';
+		*{"visit_$reftype"} = eval '
+			sub {
+				my ( $self, $data ) = @_;
+				my $new_data = $self->callback( '.$reftype.' => $data );
+				if ( ref $data eq ref $new_data ) {
+					$self->SUPER::visit_'.$reftype.'( $new_data );
+				} else {
+					$self->SUPER::visit( $new_data );
+				}
+			}
+		' || die $@;
 	}
 }
 

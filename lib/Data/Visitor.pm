@@ -8,6 +8,7 @@ use warnings;
 
 use Scalar::Util ();
 use overload ();
+use Symbol ();
 
 our $VERSION = "0.01";
 
@@ -20,7 +21,7 @@ sub visit {
 	if ( Scalar::Util::blessed( $data ) ) {
 		return $self->visit_object( $data );
 	} elsif ( my $reftype = ref $data ) {
-		if ( $reftype eq "HASH" or $reftype eq "ARRAY" ) {
+		if ( $reftype eq "HASH" or $reftype eq "ARRAY" or $reftype eq "GLOB" or $reftype eq "SCALAR") {
 			my $method = lc "visit_$reftype";
 			return $self->$method( $data );
 		}
@@ -59,6 +60,22 @@ sub visit_array {
 	} else {
 		return [ map { $self->visit( $_ ) } @$array ];
 	}
+}
+
+sub visit_scalar {
+	my ( $self, $scalar ) = @_;
+	return \$self->visit( $$scalar );
+}
+
+sub visit_glob {
+	my ( $self, $glob ) = @_;
+
+	my $new_glob = Symbol::gensym();
+
+	no warnings 'misc'; # Undefined value assigned to typeglob
+	*$new_glob = $self->visit( *$glob{$_} ) for qw/SCALAR ARRAY HASH/;
+
+	return $new_glob;
 }
 
 __PACKAGE__;
