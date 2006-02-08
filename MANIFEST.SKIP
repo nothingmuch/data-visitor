@@ -1,0 +1,14 @@
+\.DS_Store$
+^_build
+^Build$
+^blib
+~$
+\.bak$
+\.sw.$
+^cover_db
+^MANIFEST\.SKIP$
+\.tar\.gz$
+^test_mpegs
+^_darcs
+t/20-mpeg1-test(?!01\.t)
+t/20-mpeg2-test.*

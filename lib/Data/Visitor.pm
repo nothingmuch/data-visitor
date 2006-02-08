@@ -8,6 +8,8 @@ use warnings;
 
 use Scalar::Util ();
 
+our $VERSION = "0.01";
+
 sub visit {
 	my ( $self, $data ) = @_;
 
