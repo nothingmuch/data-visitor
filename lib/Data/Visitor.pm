@@ -90,21 +90,30 @@ Data::Visitor - A visitor for Perl data structures
 
 =head1 SYNOPSIS
 
+	package FooCounter;
 	use base qw/Data::Visitor/;
+
+	BEGIN { __PACKAGE__->mk_accessors( "number_of_foos" ) };
 
 	sub visit_value {
 		my ( $self, $data ) = @_;
 
-		return $whatever;
+		if ( defined $data and $data eq "foo" ) {
+			$self->number_of_foos( ($self->number_of_foos || 0) + 1 );
+		}
+
+		return $data;
 	}
 
-	sub visit_array {
-		my ( $self, $data ) = @_;
+	my $counter = FooCounter->new;
 
-		# ...
+	$counter->visit( {
+		this => "that",
+		some_foos => [ qw/foo foo bar foo/ ],
+		the_other => "foo",
+	});
 
-		return $self->SUPER::visit_array( $whatever );
-	}
+	$counter->number_of_foos; # this is now 4
 
 =head1 DESCRIPTION
 
