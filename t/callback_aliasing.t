@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 4;
 
 
 my $m; use ok $m = "Data::Visitor::Callback";
@@ -29,3 +29,8 @@ is_deeply( $structure, {
 }, "values were modified" );
 
 is( $_, "original", '$_ unchanged in outer scope');
+
+$o->callbacks->{hash} = sub { $_ = "value" };
+$o->visit( $structure );
+is( $structure, "value", "entire structure can also be changed");
+

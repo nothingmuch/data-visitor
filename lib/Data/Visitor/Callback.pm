@@ -43,12 +43,22 @@ sub visit_object {
 
 sub visit_hash {
 	my ( $self, $data ) = @_;
-	$self->SUPER::visit_hash( $self->callback( hash => $data ) );
+	my $new_data = $self->callback( hash => $data );
+	if ( ref $data eq ref $new_data ) {
+		$self->SUPER::visit_hash( $new_data );
+	} else {
+		$self->SUPER::visit( $new_data );
+	}
 }
 
 sub visit_array {
 	my ( $self, $data ) = @_;
-	$self->SUPER::visit_array( $self->callback( array => $data ) );
+	my $new_data = $self->callback( array => $data );
+	if ( ref $data eq ref $new_data ) {
+		$self->SUPER::visit_array( $new_data );
+	} else {
+		$self->SUPER::visit( $new_data );
+	}
 }
 
 sub callback {
