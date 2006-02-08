@@ -90,6 +90,9 @@ Data::Visitor - Visitor style traversal of Perl data structures
 
 =head1 SYNOPSIS
 
+	# NOTE
+	# You probably want to use Data::Visitor::Callback for trivial things
+
 	package FooCounter;
 	use base qw/Data::Visitor/;
 
