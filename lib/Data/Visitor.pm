@@ -7,11 +7,15 @@ use strict;
 use warnings;
 
 use Scalar::Util ();
+use overload ();
 
 our $VERSION = "0.01";
 
 sub visit {
 	my ( $self, $data ) = @_;
+
+	local $self->{_seen} = ($self->{_seen} || {});
+	return $data if ref $data and $self->{_seen}{ overload::StrVal( $data ) }++;
 
 	if ( Scalar::Util::blessed( $data ) ) {
 		return $self->visit_object( $data );
