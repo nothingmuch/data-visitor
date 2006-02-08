@@ -42,7 +42,7 @@ sub visit_object {
 }
 
 BEGIN {
-	foreach my $reftype ( qw/array hash glob/ ) {
+	foreach my $reftype ( qw/array hash glob scalar/ ) {
 		no strict 'refs';
 		*{"visit_$reftype"} = eval '
 			sub {

@@ -3,11 +3,10 @@
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More tests => 10;
 use Test::MockObject::Extends;
 
 use ok "Data::Visitor";
-use ok "Data::Visitor::Callback";
 
 our ( $FOO, %FOO );
 

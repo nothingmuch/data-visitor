@@ -73,7 +73,7 @@ sub visit_glob {
 	my $new_glob = Symbol::gensym();
 
 	no warnings 'misc'; # Undefined value assigned to typeglob
-	*$new_glob = $self->visit( *$glob{$_} ) for qw/SCALAR ARRAY HASH/;
+	*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
 
 	return $new_glob;
 }
