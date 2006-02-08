@@ -86,7 +86,7 @@ __END__
 
 =head1 NAME
 
-Data::Visitor - A visitor for Perl data structures
+Data::Visitor - Visitor style traversal of Perl data structures
 
 =head1 SYNOPSIS
 
@@ -121,8 +121,6 @@ This module is a simple visitor implementation for Perl values.
 
 It has a main dispatcher method, C<visit>, which takes a single perl value and
 then calls the methods appropriate for that value.
-
-The visitor pattern is 
 
 =head1 METHODS
 
@@ -176,6 +174,10 @@ C<visit_hash>.
 =head1 SEE ALSO
 
 L<Tree::Simple::VisitorFactory>, L<Data::Traverse>
+
+L<http://en.wikipedia.org/wiki/Visitor_pattern>,
+L<http://www.ninebynine.org/Software/Learning-Haskell-Notes.html#functors>,
+L<http://en.wikipedia.org/wiki/Functor>
 
 =head1 AUTHOR
 
