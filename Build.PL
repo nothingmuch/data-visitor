@@ -14,6 +14,7 @@ Module::Build->new(
 		'Test::More'                => 0,
 		'Test::use::ok'             => 0,
 		'Test::MockObject::Extends' => 0,
+		'Class::Accessor'           => 0,
 	},
 	create_makefile_pl => 'traditional',
 	sign => 1,
