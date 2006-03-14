@@ -16,11 +16,10 @@ sub new {
 		$ignore_ret = delete $callbacks{ignore_return_values};
 	}
 
-	my $self = $class->SUPER::new();
-
-	$self->callbacks( \%callbacks );
-
-	$self;
+	$class->SUPER::new({
+		ignore_return_values => $ignore_ret,
+		callbacks => \%callbacks,
+	});
 }
 
 sub visit {
