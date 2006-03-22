@@ -1,3 +1,6 @@
+0.03
+	- add Class::Accessor to requirements
+
 0.02
 	- Added GLOB recursion support
 	- Added support for circular references
