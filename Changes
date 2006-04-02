@@ -1,3 +1,6 @@
+0.04
+	- Specified that the Test::MockObject dep need 1.04
+
 0.03
 	- add Class::Accessor to requirements
 
