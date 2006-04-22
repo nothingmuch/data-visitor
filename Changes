@@ -1,3 +1,9 @@
+0.05
+	- Added support for using class names as callbacks in
+	  Data::Visitor::Callback
+	- Improved semantics of multiple instances of the same reference in a depe
+	  structure (will be mapped once, same mapped value used per each instance)
+
 0.04
 	- Specified that the Test::MockObject dep need 1.04
 
