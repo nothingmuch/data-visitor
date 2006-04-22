@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 
 my $m; use ok $m = "Data::Visitor::Callback";
@@ -25,6 +25,8 @@ my %callbacks = (
 		hash
 		glob
 		scalar
+		Moose
+		Mammal
 	),
 );
 
@@ -59,9 +61,23 @@ counters_are( [ "foo" ], "deep array", {
 	plain_value => 1,
 });
 
-counters_are( bless({}, "Moose"), "objecct", {
+{
+	package Mammal;
+	package Moose;
+	our @ISA = ("Mammal");
+}
+
+counters_are( bless({}, "Moose"), "object", {
 	visit => 1,
 	object => 1,
+	Moose => 1,
+	Mammal => 1,
+});
+
+counters_are( bless({}, "Mammal"), "object", {
+	visit => 1,
+	object => 1,
+	Mammal => 1,
 });
 
 counters_are( \10, "scalar_ref", {

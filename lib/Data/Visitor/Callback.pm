@@ -6,7 +6,9 @@ use base qw/Data::Visitor/;
 use strict;
 use warnings;
 
-__PACKAGE__->mk_accessors( qw/callbacks ignore_return_values/ );
+use Scalar::Util qw/blessed/;
+
+__PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
 
 sub new {
 	my ( $class, %callbacks ) = @_;
@@ -16,9 +18,12 @@ sub new {
 		$ignore_ret = delete $callbacks{ignore_return_values};
 	}
 
+	my @class_callbacks = grep { $_->can("isa") } keys %callbacks;
+
 	$class->SUPER::new({
 		ignore_return_values => $ignore_ret,
 		callbacks => \%callbacks,
+		class_callbacks => \@class_callbacks,
 	});
 }
 
@@ -37,7 +42,13 @@ sub visit_value {
 
 sub visit_object {
 	my ( $self, $data ) = @_;
-	$self->callback( object => $data );
+	$data = $self->callback( object => $data );
+
+	foreach my $class ( @{ $self->class_callbacks } ) {
+		$data = $self->callback( $class => $data ) if $data->isa($class);
+	}
+
+	$data;
 }
 
 BEGIN {
@@ -156,6 +167,11 @@ Called after C<value> for non references.
 =item object
 
 Called for blessed objects.
+
+=item Some::Class
+
+You can use any class name as a clalback. This is clled only after the
+C<object> callback.
 
 =item array
 
