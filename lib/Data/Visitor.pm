@@ -193,6 +193,10 @@ Then override the callback methods in any way you like. To retain visitor
 behavior, make sure to retain the functionality of C<visit_array> and
 C<visit_hash>.
 
+=head1 TODO
+
+Add support for "natural" visiting of trees.
+
 =head1 SEE ALSO
 
 L<Tree::Simple::VisitorFactory>, L<Data::Traverse>
