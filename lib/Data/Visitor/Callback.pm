@@ -59,9 +59,9 @@ BEGIN {
 				my ( $self, $data ) = @_;
 				my $new_data = $self->callback( '.$reftype.' => $data );
 				if ( ref $data eq ref $new_data ) {
-					$self->SUPER::visit_'.$reftype.'( $new_data );
+					return $self->SUPER::visit_'.$reftype.'( $new_data );
 				} else {
-					$self->SUPER::visit( $new_data );
+					return $self->SUPER::visit( $new_data );
 				}
 			}
 		' || die $@;

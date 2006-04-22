@@ -3,10 +3,11 @@
 use strict;
 use warnings;
 
-use Test::More tests => 3;
+use Test::More tests => 5;
 
 
-my $m; use ok $m = "Data::Visitor";
+use ok "Data::Visitor";
+use ok "Data::Visitor::Callback";
 
 my $structure = {
 	foo => {
@@ -16,7 +17,7 @@ my $structure = {
 
 $structure->{foo}{bar} = $structure;
 
-my $o = $m->new;
+my $o = Data::Visitor->new;
 
 {
 	alarm 1;
@@ -27,3 +28,18 @@ my $o = $m->new;
 
 is_deeply( $o->visit( $structure ), $structure, "Structure recreated" );
 
+
+my $orig = {
+	one => [ ],
+	two => [ ],
+};
+
+$orig->{one}[0] = $orig->{two}[0] = bless {}, "yyy";
+
+my $c = Data::Visitor::Callback->new(
+	object => sub { bless {}, "zzzzz" },
+);
+
+my $copy = $c->visit( $orig );
+
+is( $copy->{one}[0], $copy->{two}[0], "copy of object is a mapped copy" );

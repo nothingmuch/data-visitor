@@ -6,7 +6,7 @@ use base qw/Class::Accessor/;
 use strict;
 use warnings;
 
-use Scalar::Util ();
+use Scalar::Util qw/blessed refaddr/;
 use overload ();
 use Symbol ();
 
@@ -15,10 +15,29 @@ our $VERSION = "0.04";
 sub visit {
 	my ( $self, $data ) = @_;
 
-	local $self->{_seen} = ($self->{_seen} || {});
-	return $data if ref $data and $self->{_seen}{ overload::StrVal( $data ) }++;
+	my $seen_hash = local $self->{_seen} = ($self->{_seen} || {}); # delete it after we're done with the whole visit
+	if ( ref $data ) { # only references need recursion checks
+		if ( exists $seen_hash->{ refaddr( $data ) } ) { # if it's been seen
+			return $seen_hash->{ refaddr( $data ) }; # return whatever it was mapped to
+		} else {
+			my $seen = \( $seen_hash->{ refaddr( $data ) } );
+			$$seen = $data;
 
-	if ( Scalar::Util::blessed( $data ) ) {
+			if ( defined wantarray ) {
+				return $$seen = $self->visit_no_rec_check( $data );
+			} else {
+				return $self->visit_no_rec_check( $data );
+			}
+		}
+	} else {
+		return $self->visit_no_rec_check( $data );
+	}
+}
+
+sub visit_no_rec_check {
+	my ( $self, $data ) = @_;
+
+	if ( blessed( $data ) ) {
 		return $self->visit_object( $data );
 	} elsif ( my $reftype = ref $data ) {
 		if ( $reftype eq "HASH" or $reftype eq "ARRAY" or $reftype eq "GLOB" or $reftype eq "SCALAR") {
