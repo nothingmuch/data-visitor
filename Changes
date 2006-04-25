@@ -1,3 +1,8 @@
+0.06
+	- Removed build_requires, to try and eliminate some odd installation
+	  problems. This also fixes the Class::Accessor dep which was in the wrong
+	  slot anyway ;-)
+
 0.05
 	- Added support for using class names as callbacks in
 	  Data::Visitor::Callback
