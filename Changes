@@ -1,3 +1,6 @@
+0.07
+	- Refactor visit_ref
+
 0.06
 	- Removed build_requires, to try and eliminate some odd installation
 	  problems. This also fixes the Class::Accessor dep which was in the wrong
