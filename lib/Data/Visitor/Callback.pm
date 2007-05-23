@@ -72,7 +72,7 @@ sub callback {
 	my ( $self, $name, $data ) = @_;
 
 	if ( my $code = $self->callbacks->{$name} ) {
-		my $ret = $code->( $self, $data );
+		my $ret = $self->$code( $data );
 		return $self->ignore_return_values ? $data : $ret ;
 	} else {
 		return $data;
