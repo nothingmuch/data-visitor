@@ -1,3 +1,7 @@
+0.08
+	- add retain_magic and use it to keep blessedness of mapped objects that
+	  were forced into being visited by "regular" ref visitor methods
+
 0.07
 	- Refactor visit_ref
 
