@@ -79,7 +79,7 @@ sub visit_hash {
 	if ( not defined wantarray ) {
 		$self->visit( $_ ) for ( values %$hash );
 	} else {
-		return { map { $_ => $self->visit( $hash->{$_} ) } keys %$hash }
+		return $self->retain_magic( $hash, { map { $_ => $self->visit( $hash->{$_} ) } keys %$hash } );
 	}
 }
 
@@ -89,13 +89,13 @@ sub visit_array {
 	if ( not defined wantarray ) {
 		$self->visit( $_ ) for @$array;	
 	} else {
-		return [ map { $self->visit( $_ ) } @$array ];
+		return $self->retain_magic( $array, [ map { $self->visit( $_ ) } @$array ] );
 	}
 }
 
 sub visit_scalar {
 	my ( $self, $scalar ) = @_;
-	return \$self->visit( $$scalar );
+	return $self->retain_magic( $scalar, \$self->visit( $$scalar ) );
 }
 
 sub visit_glob {
@@ -106,7 +106,19 @@ sub visit_glob {
 	no warnings 'misc'; # Undefined value assigned to typeglob
 	*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
 
-	return $new_glob;
+	return $self->retain_magic( $glob, $new_glob );
+}
+
+sub retain_magic {
+	my ( $self, $proto, $new ) = @_;
+
+	if ( blessed($proto) and !blessed($new) ) {
+		bless $new, ref $proto;
+	}
+
+	# FIXME real magic, too
+
+	return $new;
 }
 
 __PACKAGE__;

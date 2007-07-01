@@ -42,10 +42,16 @@ sub visit_value {
 
 sub visit_object {
 	my ( $self, $data ) = @_;
-	$data = $self->callback( object => $data );
+
+	my $ignore = $self->ignore_return_values;
+
+	my $new_data = $self->callback( object => $data );
+	$data = $new_data unless $ignore;
 
 	foreach my $class ( @{ $self->class_callbacks } ) {
-		$data = $self->callback( $class => $data ) if $data->isa($class);
+		last unless blessed($data);
+		my $new_data = $self->callback( $class => $data ) if $data->isa($class);
+		$data = $new_data unless $ignore;
 	}
 
 	$data;
