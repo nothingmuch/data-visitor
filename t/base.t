@@ -28,6 +28,7 @@ my $mock = Test::MockObject::Extends->new( $o );
 
 # cause logging
 $mock->set_always( $_ => "magic" ) for qw/visit_value visit_object/;
+$mock->mock( visit_hash_key => sub { $_[1] } );
 $mock->mock( visit_hash => sub { shift->Data::Visitor::visit_hash( @_ )  } );
 $mock->mock( visit_array => sub { shift->Data::Visitor::visit_array( @_ )  } );
 

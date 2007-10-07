@@ -77,20 +77,46 @@ sub visit_hash {
 	my ( $self, $hash ) = @_;
 
 	if ( not defined wantarray ) {
-		$self->visit( $_ ) for ( values %$hash );
+		foreach my $key ( keys %$hash ) {
+			$self->visit_hash_entry( $key, $hash->{$key}, $hash );
+		}
 	} else {
-		return $self->retain_magic( $hash, { map { $_ => $self->visit( $hash->{$_} ) } keys %$hash } );
+		return $self->retain_magic( $hash, { map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash } );
 	}
+}
+
+sub visit_hash_entry {
+	my ( $self, $key, $value, $hash ) = @_;
+
+	return (
+		$self->visit_hash_key($key,$value,$hash),
+		$self->visit_hash_value($_[2],$key,$hash) # retain aliasing semantics
+	);
+}
+
+sub visit_hash_key {
+	my ( $self, $key, $value, $hash ) = @_;
+	$self->visit($key);
+}
+
+sub visit_hash_value {
+	my ( $self, $value, $key, $hash ) = @_;
+	$self->visit($_[1]); # retain it's aliasing semantics
 }
 
 sub visit_array {
 	my ( $self, $array ) = @_;
 
 	if ( not defined wantarray ) {
-		$self->visit( $_ ) for @$array;	
+		$self->visit_array_entry( $array->[$_], $_, $array ) for 0 .. $#$array
 	} else {
-		return $self->retain_magic( $array, [ map { $self->visit( $_ ) } @$array ] );
+		return $self->retain_magic( $array, [ map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array ] );
 	}
+}
+
+sub visit_array_entry {
+	my ( $self, $value, $index, $array ) = @_;
+	$self->visit($_[1]);
 }
 
 sub visit_scalar {
@@ -206,6 +232,24 @@ These methods are called for the corresponding container type.
 
 If the value is anything else, this method is called. The base implementation
 will return $value.
+
+=item visit_hash_entry $key, $value, $hash
+
+Delegates to C<visit_hash_key> and C<visit_hash_value>. The value is passed as
+C<$_[2]> so that it is aliased.
+
+=item visit_hash_key $key, $value, $hash
+
+Calls C<visit> on the key and returns it.
+
+=item visit_hash_value $value, $key, $hash
+
+The value will be aliased (passed as C<$_[1]>).
+
+=item visit_array_entry $value, $index, $array
+
+Delegates to C<visit> on value. The value is passed as C<$_[1]> to retain
+aliasing.
 
 =back
 

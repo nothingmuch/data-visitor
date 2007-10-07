@@ -91,11 +91,11 @@ our $FOO = 1;
 our %FOO = ( "foo" => undef );
 
 counters_are( \*FOO, "glob", {
-	visit => 5,
+	visit => 6,
 	'scalar' => 1,
 	hash => 1,
-	value => 2,
-	plain_value => 2,
+	value => 3,
+	plain_value => 3,
 	'glob' => 1,
 });
 
