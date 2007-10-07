@@ -152,6 +152,10 @@ The callback is in the form:
 Within the callback $_ is aliased to the data, and this is also passed in the
 parameter list.
 
+Any method can also be used as a callback:
+
+	object => "visit_ref", # visit objects anyway
+
 =over 4
 
 =item visit
@@ -174,9 +178,16 @@ Called after C<value> for non references.
 
 Called for blessed objects.
 
+Since L<Data::Visitor/visit_object> will not recurse downwards unless you
+delegate to C<visit_ref>, you can specify C<visit_ref> as the callback for
+C<object> in order to enter objects.
+
+It is reccomended that you specify the classes you want though, instead of just
+visiting any object forcefully.
+
 =item Some::Class
 
-You can use any class name as a clalback. This is clled only after the
+You can use any class name as a callback. This is clled only after the
 C<object> callback.
 
 =item array

@@ -182,6 +182,16 @@ various other visiting methods, based on the data's type.
 If the value is a blessed object, C<visit> calls this method. The base
 implementation will just forward to C<visit_value>.
 
+=item visit_ref $value
+
+Generic recursive visitor. All non blessed values are given to this.
+
+C<visit_object> can delegate to this method in order to visit the object
+anyway.
+
+This will check if the visitor can handle C<visit_$reftype> (lowercase), and if
+not delegate to C<visit_value> instead.
+
 =item visit_array $array_ref
 
 =item visit_hash $hash_ref
