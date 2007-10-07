@@ -273,7 +273,22 @@ C<visit_hash>.
 
 =head1 TODO
 
+=over 4
+
+=item *
+
 Add support for "natural" visiting of trees.
+
+=item *
+
+Expand C<retain_magic> to support tying at the very least, or even more with
+L<Variable::Magic> if possible.
+
+Tied values might be redirected to an alternate handler that builds a new empty
+value, and ties it to a visited clone of the object the original is tied to
+using a trampoline class. Look into this.
+
+=back
 
 =head1 SEE ALSO
 
