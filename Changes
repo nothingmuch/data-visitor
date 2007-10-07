@@ -1,3 +1,6 @@
+0.09
+	- add visit_hash_entry and visit_array_entry
+
 0.08
 	- add retain_magic and use it to keep blessedness of mapped objects that
 	  were forced into being visited by "regular" ref visitor methods
