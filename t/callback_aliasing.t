@@ -15,7 +15,7 @@ my $structure = {
 
 my $o = $m->new(
 	ignore_return_values => 0,
-	plain_value => sub { s/b/m/g; "laaa" },
+	plain_value => sub { no warnings 'uninitialized'; s/b/m/g; "laaa" },
 	array => sub { $_ = 42; undef},
 );
 
