@@ -10,7 +10,7 @@ use Scalar::Util qw/blessed refaddr reftype/;
 use overload ();
 use Symbol ();
 
-our $VERSION = "0.09";
+our $VERSION = "0.10";
 
 sub visit {
 	my ( $self, $data ) = @_;
