@@ -6,7 +6,7 @@ use base qw/Data::Visitor/;
 use strict;
 use warnings;
 
-use Scalar::Util qw/blessed/;
+use Scalar::Util qw/blessed refaddr/;
 
 __PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
 
@@ -29,8 +29,20 @@ sub new {
 
 sub visit {
 	my ( $self, $data ) = @_;
+
+	my $replaced_hash = local $self->{_replaced} = ($self->{_replaced} || {}); # delete it after we're done with the whole visit
+
 	local *_ = \$_[1]; # alias $_
-	$self->SUPER::visit( $self->callback( visit => $data ) );
+
+	if ( ref $data and exists $replaced_hash->{ refaddr($data) } ) {
+		return $_[1] = $replaced_hash->{ refaddr($data) };
+	} else {
+		my $ret = $self->SUPER::visit( $self->callback( visit => $data ) );
+
+		$replaced_hash->{ refaddr($data) } = $_ if ref $data and ( not ref $_ or refaddr($data) ne refaddr($_) );
+
+		return $ret;
+	}
 }
 
 sub visit_value {
@@ -46,6 +58,7 @@ sub visit_object {
 	my $ignore = $self->ignore_return_values;
 
 	my $new_data = $self->callback( object => $data );
+	$self->_register_mapping( $data, $new_data );
 	$data = $new_data unless $ignore;
 
 	foreach my $class ( @{ $self->class_callbacks } ) {
@@ -58,16 +71,17 @@ sub visit_object {
 }
 
 BEGIN {
-	foreach my $reftype ( qw/array hash glob scalar/ ) {
+	foreach my $reftype ( qw/array hash glob scalar code/ ) {
 		no strict 'refs';
 		*{"visit_$reftype"} = eval '
 			sub {
 				my ( $self, $data ) = @_;
 				my $new_data = $self->callback( '.$reftype.' => $data );
+				$self->_register_mapping( $data, $new_data );
 				if ( ref $data eq ref $new_data ) {
-					return $self->SUPER::visit_'.$reftype.'( $new_data );
+					return $self->_register_mapping( $data, $self->SUPER::visit_'.$reftype.'( $new_data ) );
 				} else {
-					return $self->SUPER::visit( $new_data );
+					return $self->_register_mapping( $data, $self->visit( $new_data ) );
 				}
 			}
 		' || die $@;

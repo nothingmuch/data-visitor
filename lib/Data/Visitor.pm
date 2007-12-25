@@ -17,52 +17,55 @@ sub visit {
 
 	my $seen_hash = local $self->{_seen} = ($self->{_seen} || {}); # delete it after we're done with the whole visit
 	if ( ref $data ) { # only references need recursion checks
-		if ( exists $seen_hash->{ refaddr( $data ) } ) { # if it's been seen
-			return $seen_hash->{ refaddr( $data ) }; # return whatever it was mapped to
-		} else {
-			my $seen = \( $seen_hash->{ refaddr( $data ) } );
-			$$seen = $data;
-
-			if ( defined wantarray ) {
-				return $$seen = $self->visit_no_rec_check( $data );
-			} else {
-				return $self->visit_no_rec_check( $data );
-			}
+		if ( exists $seen_hash->{ refaddr($data) } ) {
+			return $seen_hash->{ refaddr($data) }; # return whatever it was mapped to
 		}
-	} else {
-		return $self->visit_no_rec_check( $data );
 	}
+
+	return $self->visit_no_rec_check( $data );
+}
+
+sub _get_mapping {
+	my ( $self, $data ) = @_;
+	$self->{_seen}{ refaddr($data) };
+}
+
+sub _register_mapping {
+	my ( $self, $data, $new_data ) = @_;
+	$self->{_seen}{ refaddr($data) } = $new_data;
 }
 
 sub visit_no_rec_check {
 	my ( $self, $data ) = @_;
 
-	if ( blessed( $data ) ) {
-		return $self->visit_object( $data );
+	if ( blessed($data) ) {
+		return $self->visit_object($data);
 	} elsif ( ref $data ) {
-		return $self->visit_ref( $data );
+		return $self->visit_ref($data);
 	}
 	
-	return $self->visit_value( $data );
+	return $self->visit_value($data);
 }
 
 sub visit_object {
 	my ( $self, $object ) = @_;
 
-	return $self->visit_value( $object );
+	return $self->_register_mapping( $object, $self->visit_value($object) );
 }
 
 sub visit_ref {
 	my ( $self, $data ) = @_;
 
-	 my $reftype = reftype $data;
+	my $reftype = reftype $data;
+
+	$reftype = "SCALAR" if $reftype =~ /^(?:REF|LVALUE|VSTRING)$/;
 
 	my $method = lc "visit_$reftype";
 
 	if ( $self->can($method) ) {
-		return $self->$method( $data );
+		return $self->_register_mapping( $data, $self->$method($data) );
 	} else {
-		return $self->visit_value($data);
+		return $self->_register_mapping( $data, $self->visit_value($data) );
 	}
 
 }
@@ -77,11 +80,15 @@ sub visit_hash {
 	my ( $self, $hash ) = @_;
 
 	if ( not defined wantarray ) {
+		$self->_register_mapping( $hash, $hash );
 		foreach my $key ( keys %$hash ) {
 			$self->visit_hash_entry( $key, $hash->{$key}, $hash );
 		}
 	} else {
-		return $self->retain_magic( $hash, { map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash } );
+		my $new_hash = {};
+		$self->_register_mapping( $hash, $new_hash );
+		%$new_hash = map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash;
+		return $self->retain_magic( $hash, $new_hash );
 	}
 }
 
@@ -108,9 +115,13 @@ sub visit_array {
 	my ( $self, $array ) = @_;
 
 	if ( not defined wantarray ) {
+		$self->_register_mapping( $array, $array );
 		$self->visit_array_entry( $array->[$_], $_, $array ) for 0 .. $#$array
 	} else {
-		return $self->retain_magic( $array, [ map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array ] );
+		my $new_array = [];
+		$self->_register_mapping( $array, $new_array );
+		@$new_array = map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array;
+		return $self->retain_magic( $array, $new_array );
 	}
 }
 
@@ -121,13 +132,23 @@ sub visit_array_entry {
 
 sub visit_scalar {
 	my ( $self, $scalar ) = @_;
-	return $self->retain_magic( $scalar, \$self->visit( $$scalar ) );
+	my $new_scalar;
+	$self->_register_mapping( $scalar, \$new_scalar );
+	$new_scalar = $self->visit( $$scalar );
+	return $self->retain_magic( $scalar, \$new_scalar );
+}
+
+sub visit_code {
+	my ( $self, $code ) = @_;
+	$self->visit_value($code);
 }
 
 sub visit_glob {
 	my ( $self, $glob ) = @_;
 
 	my $new_glob = Symbol::gensym();
+
+	$self->_register_mapping( $glob, $new_glob );
 
 	no warnings 'misc'; # Undefined value assigned to typeglob
 	*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
