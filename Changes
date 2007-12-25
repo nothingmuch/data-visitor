@@ -1,3 +1,6 @@
+0.10
+	- Fix buggy behavior for duplicate and circular values
+
 0.09
 	- add visit_hash_entry and visit_array_entry
 
