@@ -63,7 +63,9 @@ sub visit_object {
 
 	foreach my $class ( @{ $self->class_callbacks } ) {
 		last unless blessed($data);
-		my $new_data = $self->callback( $class => $data ) if $data->isa($class);
+		next unless $data->isa($class);
+
+		my $new_data = $self->callback( $class => $data );
 		$data = $new_data unless $ignore;
 	}
 
