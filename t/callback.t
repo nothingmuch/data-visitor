@@ -27,6 +27,7 @@ my %callbacks = (
 		scalar
 		Moose
 		Mammal
+		Unrelated::Class
 	),
 );
 
@@ -65,6 +66,9 @@ counters_are( [ "foo" ], "deep array", {
 	package Mammal;
 	package Moose;
 	our @ISA = ("Mammal");
+}
+{
+	package Unrelated::Class;
 }
 
 counters_are( bless({}, "Moose"), "object", {
