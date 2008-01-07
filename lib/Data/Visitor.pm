@@ -325,7 +325,7 @@ Yuval Kogman <nothingmuch@woobling.org>
 
 =head1 COPYRIGHT & LICENSE
 
-	Copyright (c) 2006 Yuval Kogman. All rights reserved
+	Copyright (c) 2006-2008 Yuval Kogman. All rights reserved
 	This program is free software; you can redistribute
 	it and/or modify it under the same terms as Perl itself.
 
