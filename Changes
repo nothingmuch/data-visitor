@@ -1,3 +1,6 @@
+0.12
+	- _register_mapping was not called for each class callback result
+
 0.11
 	- Fix a bug where objects were mapped to undef when a class callback
 	  doesn't match
