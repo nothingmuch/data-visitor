@@ -10,6 +10,8 @@ use Scalar::Util qw/blessed refaddr reftype/;
 use overload ();
 use Symbol ();
 
+__PACKAGE__->mk_accessors(qw(tied_as_objects));
+
 our $VERSION = "0.12";
 
 sub visit {
@@ -82,15 +84,26 @@ sub visit_hash {
 
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $hash, $hash );
-		foreach my $key ( keys %$hash ) {
-			$self->visit_hash_entry( $key, $hash->{$key}, $hash );
-		}
+		$self->visit_hash_entries($hash);
 	} else {
 		my $new_hash = {};
 		$self->_register_mapping( $hash, $new_hash );
-		%$new_hash = map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash;
+
+		my $tied = tied(%$hash);
+		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $hash)) ) {
+			tie %$new_hash, 'Data::Visitor::TieToObject', $new_tied;
+		} else {
+			%$new_hash = $self->visit_hash_entries($hash);
+		}
+
 		return $self->retain_magic( $hash, $new_hash );
 	}
+}
+
+sub visit_hash_entries {
+	my ( $self, $hash ) = @_;
+	no warnings 'void';
+	map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash;
 }
 
 sub visit_hash_entry {
@@ -117,13 +130,27 @@ sub visit_array {
 
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $array, $array );
+		$self->visit_array_entries($array);
 		$self->visit_array_entry( $array->[$_], $_, $array ) for 0 .. $#$array
 	} else {
 		my $new_array = [];
 		$self->_register_mapping( $array, $new_array );
-		@$new_array = map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array;
+
+		my $tied = tied(@$array);
+		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $array)) ) {
+			tie @$new_array, 'Data::Visitor::TieToObject', $new_tied;
+		} else {
+			@$new_array = $self->visit_array_entries($array);
+		}
+
 		return $self->retain_magic( $array, $new_array );
 	}
+}
+
+sub visit_array_entries {
+	my ( $self, $array ) = @_;
+	no warnings 'void';
+	map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array;
 }
 
 sub visit_array_entry {
@@ -133,9 +160,17 @@ sub visit_array_entry {
 
 sub visit_scalar {
 	my ( $self, $scalar ) = @_;
+
 	my $new_scalar;
 	$self->_register_mapping( $scalar, \$new_scalar );
-	$new_scalar = $self->visit( $$scalar );
+
+	my $tied = tied($$scalar);
+	if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $scalar)) ) {
+		tie $new_scalar, 'Data::Visitor::TieToObject', $new_tied;
+	} else {
+		$new_scalar = $self->visit( $$scalar );
+	}
+
 	return $self->retain_magic( $scalar, \$new_scalar );
 }
 
@@ -151,8 +186,13 @@ sub visit_glob {
 
 	$self->_register_mapping( $glob, $new_glob );
 
-	no warnings 'misc'; # Undefined value assigned to typeglob
-	*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
+	my $tied = tied(*$glob);
+	if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $glob)) ) {
+		tie *$new_glob, 'Data::Visitor::TieToObject', $new_tied;
+	} else {
+		no warnings 'misc'; # Undefined value assigned to typeglob
+		*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
+	}
 
 	return $self->retain_magic( $glob, $new_glob );
 }
@@ -167,6 +207,26 @@ sub retain_magic {
 	# FIXME real magic, too
 
 	return $new;
+}
+
+sub visit_tied {
+	my ( $self, $tied, $var ) = @_;
+	$self->visit($tied); # as an object eventually
+}
+
+{
+	package Data::Visitor::TieToObject;
+
+	sub AUTOLOAD {
+		my ( $self, $tied ) = @_;
+		my ( $method ) = ( our $AUTOLOAD =~ /([^:]+)$/ );
+
+		if ( $method =~ /^TIE/ ) {
+			return $tied;
+		} else {
+			die "Unsupported method for $method";
+		}
+	}
 }
 
 __PACKAGE__;
@@ -273,6 +333,20 @@ The value will be aliased (passed as C<$_[1]>).
 Delegates to C<visit> on value. The value is passed as C<$_[1]> to retain
 aliasing.
 
+=item visit_tied $object, $var
+
+When C<tied_as_objects> is enabled and a tied variable (hash, array, glob or
+scalar) is encountered this method will be called on the tied object. If a
+valid mapped value is returned, the newly constructed result container will be
+tied to the return value and no iteration of the contents of the data will be
+made (since all storage is delegated to the tied object).
+
+If a non blessed value is returned from C<visit_tied> then the structure will
+be iterated normally, and the result container will not be tied at all.
+
+This is because tying to the same class and performing the tie operations will
+not yield the same results in many cases.
+
 =back
 
 =head1 RETURN VALUE
@@ -306,15 +380,11 @@ Add support for "natural" visiting of trees.
 Expand C<retain_magic> to support tying at the very least, or even more with
 L<Variable::Magic> if possible.
 
-Tied values might be redirected to an alternate handler that builds a new empty
-value, and ties it to a visited clone of the object the original is tied to
-using a trampoline class. Look into this.
-
 =back
 
 =head1 SEE ALSO
 
-L<Tree::Simple::VisitorFactory>, L<Data::Traverse>
+L<Data::Rmap>, L<Tree::Simple::VisitorFactory>, L<Data::Traverse>
 
 L<http://en.wikipedia.org/wiki/Visitor_pattern>,
 L<http://www.ninebynine.org/Software/Learning-Haskell-Notes.html#functors>,
