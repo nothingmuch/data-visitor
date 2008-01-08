@@ -58,15 +58,20 @@ sub visit_object {
 	my $ignore = $self->ignore_return_values;
 
 	my $new_data = $self->callback( object => $data );
-	$self->_register_mapping( $data, $new_data );
-	$data = $new_data unless $ignore;
+	unless ( $ignore ) {
+		$self->_register_mapping( $data, $new_data );
+		$data = $new_data;
+	}
 
 	foreach my $class ( @{ $self->class_callbacks } ) {
 		last unless blessed($data);
 		next unless $data->isa($class);
 
 		my $new_data = $self->callback( $class => $data );
-		$data = $new_data unless $ignore;
+		unless ( $ignore ) {
+			$self->_register_mapping( $data, $new_data );
+			$data = $new_data;
+		}
 	}
 
 	$data;
