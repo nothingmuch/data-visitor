@@ -48,30 +48,20 @@ sub visit {
 sub visit_value {
 	my ( $self, $data ) = @_;
 
-	$self->callback( value => $data );
-	$self->callback( ( ref($data) ? "ref_value" : "plain_value" ) => $data );
+	$data = $self->callback_and_reg( value => $data );
+	$self->callback_and_reg( ( ref($data) ? "ref_value" : "plain_value" ) => $data );
 }
 
 sub visit_object {
 	my ( $self, $data ) = @_;
 
-	my $ignore = $self->ignore_return_values;
-
-	my $new_data = $self->callback( object => $data );
-	unless ( $ignore ) {
-		$self->_register_mapping( $data, $new_data );
-		$data = $new_data;
-	}
+	$data = $self->callback_and_reg( object => $data );
 
 	foreach my $class ( @{ $self->class_callbacks } ) {
 		last unless blessed($data);
 		next unless $data->isa($class);
 
-		my $new_data = $self->callback( $class => $data );
-		unless ( $ignore ) {
-			$self->_register_mapping( $data, $new_data );
-			$data = $new_data;
-		}
+		$data = $self->callback_and_reg( $class => $data );
 	}
 
 	$data;
@@ -83,9 +73,8 @@ BEGIN {
 		*{"visit_$reftype"} = eval '
 			sub {
 				my ( $self, $data ) = @_;
-				my $new_data = $self->callback( '.$reftype.' => $data );
-				$self->_register_mapping( $data, $new_data );
-				if ( ref $data eq ref $new_data ) {
+				my $new_data = $self->callback_and_reg( '.$reftype.' => $data );
+				if ( "'.uc($reftype).'" eq ref $new_data ) {
 					return $self->_register_mapping( $data, $self->SUPER::visit_'.$reftype.'( $new_data ) );
 				} else {
 					return $self->_register_mapping( $data, $self->visit( $new_data ) );
@@ -101,6 +90,18 @@ sub callback {
 	if ( my $code = $self->callbacks->{$name} ) {
 		my $ret = $self->$code( $data );
 		return $self->ignore_return_values ? $data : $ret ;
+	} else {
+		return $data;
+	}
+}
+
+sub callback_and_reg {
+	my ( $self, $name, $data ) = @_;
+
+	my $new_data = $self->callback( $name, $data );
+
+	unless ( $self->ignore_return_values ) {
+		return $self->_register_mapping( $data, $new_data );
 	} else {
 		return $data;
 	}

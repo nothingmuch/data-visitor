@@ -32,6 +32,7 @@ sub _get_mapping {
 
 sub _register_mapping {
 	my ( $self, $data, $new_data ) = @_;
+	return $new_data unless ref $data;
 	$self->{_seen}{ refaddr($data) } = $new_data;
 }
 
