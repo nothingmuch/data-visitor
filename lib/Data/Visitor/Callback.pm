@@ -64,6 +64,9 @@ sub visit_object {
 		$data = $self->callback_and_reg( $class => $data );
 	}
 
+	$data = $self->callback_and_reg( object_final => $data )
+		if blessed($data);
+
 	$data;
 }
 
