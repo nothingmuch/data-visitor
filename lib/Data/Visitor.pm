@@ -12,7 +12,7 @@ use Symbol ();
 
 __PACKAGE__->mk_accessors(qw(tied_as_objects));
 
-our $VERSION = "0.12";
+our $VERSION = "0.13";
 
 sub visit {
 	my ( $self, $data ) = @_;
