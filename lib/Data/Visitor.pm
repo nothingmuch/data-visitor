@@ -10,6 +10,8 @@ use Scalar::Util qw/blessed refaddr reftype/;
 use overload ();
 use Symbol ();
 
+use Tie::ToObject;
+
 __PACKAGE__->mk_accessors(qw(tied_as_objects));
 
 our $VERSION = "0.13";
@@ -91,7 +93,7 @@ sub visit_hash {
 
 		my $tied = tied(%$hash);
 		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $hash)) ) {
-			tie %$new_hash, 'Data::Visitor::TieToObject', $new_tied;
+			tie %$new_hash, 'Tie::ToObject', $new_tied;
 		} else {
 			%$new_hash = $self->visit_hash_entries($hash);
 		}
@@ -212,21 +214,6 @@ sub retain_magic {
 sub visit_tied {
 	my ( $self, $tied, $var ) = @_;
 	$self->visit($tied); # as an object eventually
-}
-
-{
-	package Data::Visitor::TieToObject;
-
-	sub AUTOLOAD {
-		my ( $self, $tied ) = @_;
-		my ( $method ) = ( our $AUTOLOAD =~ /([^:]+)$/ );
-
-		if ( $method =~ /^TIE/ ) {
-			return $tied;
-		} else {
-			die "Unsupported method for $method";
-		}
-	}
 }
 
 __PACKAGE__;
