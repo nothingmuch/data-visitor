@@ -6,7 +6,7 @@ use base qw/Data::Visitor/;
 use strict;
 use warnings;
 
-use Scalar::Util qw/blessed refaddr/;
+use Scalar::Util qw/blessed refaddr reftype/;
 
 __PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
 
@@ -83,7 +83,7 @@ BEGIN {
 			sub {
 				my ( $self, $data ) = @_;
 				my $new_data = $self->callback_and_reg( '.$reftype.' => $data );
-				if ( "'.uc($reftype).'" eq ref $new_data ) {
+				if ( "'.uc($reftype).'" eq (reftype($new_data)||"") ) {
 					return $self->_register_mapping( $data, $self->SUPER::visit_'.$reftype.'( $new_data ) );
 				} else {
 					return $self->_register_mapping( $data, $self->visit( $new_data ) );
