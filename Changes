@@ -1,3 +1,6 @@
+0.14
+	- Refactored to use Tie::ToObject instead of a custom class
+
 0.13
 	- Add support for preserving tied()ness, and for visiting
 
