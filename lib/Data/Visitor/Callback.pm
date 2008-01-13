@@ -246,13 +246,24 @@ Since L<Data::Visitor/visit_object> will not recurse downwards unless you
 delegate to C<visit_ref>, you can specify C<visit_ref> as the callback for
 C<object> in order to enter objects.
 
-It is reccomended that you specify the classes you want though, instead of just
-visiting any object forcefully.
+It is reccomended that you specify the classes (or base classes) you want
+though, instead of just visiting any object forcefully.
 
 =item Some::Class
 
-You can use any class name as a callback. This is clled only after the
+You can use any class name as a callback. This is colled only after the
 C<object> callback.
+
+If the object C<isa> the class then the callback will fire.
+
+=item object_no_class
+
+Called for every object that did not have a class callback.
+
+=item object_final
+
+The last callback called for objects, useful if you want to post process the
+output of any class callbacks.
 
 =item array
 
