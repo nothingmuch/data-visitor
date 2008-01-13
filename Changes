@@ -1,5 +1,8 @@
 0.14
 	- Refactored to use Tie::ToObject instead of a custom class
+	- Simple tracing added, enable by setting $DEBUG
+	- added the object_no_class callback
+	- no longer uses $string->can("isa") to figure out if that's a class
 
 0.13
 	- Add support for preserving tied()ness, and for visiting
