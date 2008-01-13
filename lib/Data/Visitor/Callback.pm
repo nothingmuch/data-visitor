@@ -68,13 +68,18 @@ sub visit_object {
 
 	$data = $self->callback_and_reg( object => $data );
 
+	my $class_cb = 0;
+
 	foreach my $class ( @{ $self->class_callbacks } ) {
 		last unless blessed($data);
 		next unless $data->isa($class);
 		$self->trace( flow => class_callback => $class, on => $data ) if DEBUG;
 
+		$class_cb++;
 		$data = $self->callback_and_reg( $class => $data );
 	}
+
+	$data = $self->callback_and_reg( object_no_class => $data ) unless $class_cb;
 
 	$data = $self->callback_and_reg( object_final => $data )
 		if blessed($data);
