@@ -87,10 +87,19 @@ sub visit_object {
 	$data;
 }
 
+sub subname { $_[2] }
+
 BEGIN {
+	eval {
+		require Sub::Name;
+		no warnings 'redefine';
+		*subname = \&Sub::Name::subname;
+	};
+
 	foreach my $reftype ( qw/array hash glob scalar code/ ) {
+		my $name = "visit_$reftype";
 		no strict 'refs';
-		*{"visit_$reftype"} = eval '
+		*$name = subname(__PACKAGE__ . "::$name", eval '
 			sub {
 				my ( $self, $data ) = @_;
 				my $new_data = $self->callback_and_reg( '.$reftype.' => $data );
@@ -100,7 +109,7 @@ BEGIN {
 					return $self->_register_mapping( $data, $self->visit( $new_data ) );
 				}
 			}
-		' || die $@;
+		' || die $@);
 	}
 }
 
