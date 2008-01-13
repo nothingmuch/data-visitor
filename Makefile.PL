@@ -8,7 +8,7 @@ WriteMakefile
 		'Class::Accessor'  => '0',
 		'Test::MockObject' => '1.04',
 		'Test::More'       => '0',
-		'Test::use::ok'    => '0'
+		'Test::use::ok'    => '0',
 		'Tie::ToObject'    => '0.01',
 	},
 	'INSTALLDIRS' => 'site',
