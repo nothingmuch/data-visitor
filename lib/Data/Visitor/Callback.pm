@@ -23,7 +23,7 @@ sub new {
 		$tied_as_objects = delete $callbacks{tied_as_objects};
 	}
 
-	my @class_callbacks = grep { $_->can("isa") } keys %callbacks;
+	my @class_callbacks = do { no strict 'refs'; grep { defined %{"${_}::"} } keys %callbacks };
 
 	$class->SUPER::new({
 		tied_as_objects => $tied_as_objects,
