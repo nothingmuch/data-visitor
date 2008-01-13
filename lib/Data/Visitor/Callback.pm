@@ -10,6 +10,8 @@ use Scalar::Util qw/blessed refaddr reftype/;
 
 __PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
 
+BEGIN { *DEBUG = \&Data::Visitor::DEBUG }
+
 sub new {
 	my ( $class, %callbacks ) = @_;
 
@@ -41,6 +43,7 @@ sub visit {
 	local *_ = \$_[1]; # alias $_
 
 	if ( ref $data and exists $replaced_hash->{ refaddr($data) } ) {
+		$self->trace( mapping => replace => $data, with => $replaced_hash->{ refaddr($data) } ) if DEBUG;
 		return $_[1] = $replaced_hash->{ refaddr($data) };
 	} else {
 		my $ret = $self->SUPER::visit( $self->callback( visit => $data ) );
@@ -61,11 +64,14 @@ sub visit_value {
 sub visit_object {
 	my ( $self, $data ) = @_;
 
+	$self->trace( flow => visit_object => $data ) if DEBUG;
+
 	$data = $self->callback_and_reg( object => $data );
 
 	foreach my $class ( @{ $self->class_callbacks } ) {
 		last unless blessed($data);
 		next unless $data->isa($class);
+		$self->trace( flow => class_callback => $class, on => $data ) if DEBUG;
 
 		$data = $self->callback_and_reg( $class => $data );
 	}
@@ -97,6 +103,7 @@ sub callback {
 	my ( $self, $name, $data, @args ) = @_;
 
 	if ( my $code = $self->callbacks->{$name} ) {
+		$self->trace( flow => callback => $name, on => $data ) if DEBUG;
 		my $ret = $self->$code( $data, @args );
 		return $self->ignore_return_values ? $data : $ret ;
 	} else {

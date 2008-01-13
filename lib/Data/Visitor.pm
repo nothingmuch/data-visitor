@@ -14,15 +14,41 @@ use Tie::ToObject;
 
 __PACKAGE__->mk_accessors(qw(tied_as_objects));
 
+use constant DEBUG => our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
+
+sub trace {
+	my ( $self, $category, @msg ) = @_;
+
+	our %DEBUG;
+
+	if ( $DEBUG{$category} or !exists($DEBUG{$category}) ) {
+		$self->_print_trace("$self: " . join("",
+			( "    " x ( $self->{depth} - 1 ) ),
+			( join(" ", "$category:", map { overload::StrVal($_) } @msg) ),
+		));
+	}
+}
+
+sub _print_trace {
+	my ( $self, @msg ) = @_;
+	warn "@msg\n";
+}
+
 our $VERSION = "0.13";
 
 sub visit {
 	my ( $self, $data ) = @_;
 
+	local $self->{depth} = (($self->{depth}||0) + 1) if DEBUG;
+	$self->trace( flow => visit => $data ) if DEBUG;
+
 	my $seen_hash = local $self->{_seen} = ($self->{_seen} || {}); # delete it after we're done with the whole visit
 	if ( ref $data ) { # only references need recursion checks
 		if ( exists $seen_hash->{ refaddr($data) } ) {
+			$self->trace( mapping => found_mapping => from => $data, to => $seen_hash->{ refaddr($data) } ) if DEBUG;
 			return $seen_hash->{ refaddr($data) }; # return whatever it was mapped to
+		} else {
+			$self->trace( mapping => no_mapping => $data ) if DEBUG;
 		}
 	}
 
@@ -37,6 +63,7 @@ sub _get_mapping {
 sub _register_mapping {
 	my ( $self, $data, $new_data ) = @_;
 	return $new_data unless ref $data;
+	$self->trace( mapping => register_mapping => from => $data, to => $new_data, in => (caller(1))[3] ) if DEBUG;
 	$self->{_seen}{ refaddr($data) } = $new_data;
 }
 
@@ -54,12 +81,16 @@ sub visit_no_rec_check {
 
 sub visit_object {
 	my ( $self, $object ) = @_;
-
+	$self->trace( flow => visit_object => $object ) if DEBUG;
 	return $self->_register_mapping( $object, $self->visit_value($object) );
 }
 
 sub visit_ref {
 	my ( $self, $data ) = @_;
+
+	local $self->{depth} = (($self->{depth}||0) + 1) if DEBUG;
+
+	$self->trace( flow => visit_ref => $data ) if DEBUG;
 
 	my $reftype = reftype $data;
 
@@ -77,12 +108,14 @@ sub visit_ref {
 
 sub visit_value {
 	my ( $self, $value ) = @_;
-
+	$self->trace( flow => visit_value => $value ) if DEBUG;
 	return $value;
 }
 
 sub visit_hash {
 	my ( $self, $hash ) = @_;
+
+	local $self->{depth} = (($self->{depth}||0) + 1) if DEBUG;
 
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $hash, $hash );
@@ -93,6 +126,7 @@ sub visit_hash {
 
 		my $tied = tied(%$hash);
 		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $hash)) ) {
+			$self->trace( data => tying => var => $new_hash, to => $new_tied ) if DEBUG;
 			tie %$new_hash, 'Tie::ToObject', $new_tied;
 		} else {
 			%$new_hash = $self->visit_hash_entries($hash);
@@ -110,6 +144,8 @@ sub visit_hash_entries {
 
 sub visit_hash_entry {
 	my ( $self, $key, $value, $hash ) = @_;
+
+	$self->trace( flow => visit_hash_entry => key => $key, value => $value ) if DEBUG;
 
 	return (
 		$self->visit_hash_key($key,$value,$hash),
@@ -140,6 +176,7 @@ sub visit_array {
 
 		my $tied = tied(@$array);
 		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $array)) ) {
+			$self->trace( data => tying => var => $new_array, to => $new_tied ) if DEBUG;
 			tie @$new_array, 'Data::Visitor::TieToObject', $new_tied;
 		} else {
 			@$new_array = $self->visit_array_entries($array);
@@ -168,6 +205,7 @@ sub visit_scalar {
 
 	my $tied = tied($$scalar);
 	if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $scalar)) ) {
+		$self->trace( data => tying => var => $new_scalar, to => $new_tied ) if DEBUG;
 		tie $new_scalar, 'Data::Visitor::TieToObject', $new_tied;
 	} else {
 		$new_scalar = $self->visit( $$scalar );
@@ -190,6 +228,7 @@ sub visit_glob {
 
 	my $tied = tied(*$glob);
 	if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $glob)) ) {
+		$self->trace( data => tying => var => $new_glob, to => $new_tied ) if DEBUG;
 		tie *$new_glob, 'Data::Visitor::TieToObject', $new_tied;
 	} else {
 		no warnings 'misc'; # Undefined value assigned to typeglob
@@ -203,6 +242,7 @@ sub retain_magic {
 	my ( $self, $proto, $new ) = @_;
 
 	if ( blessed($proto) and !blessed($new) ) {
+		$self->trace( data => blessing => $new, ref $proto ) if DEBUG;
 		bless $new, ref $proto;
 	}
 
