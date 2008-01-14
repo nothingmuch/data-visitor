@@ -10,7 +10,7 @@ use Scalar::Util qw/blessed refaddr reftype/;
 
 __PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
 
-BEGIN { *DEBUG = \&Data::Visitor::DEBUG }
+use constant DEBUG => Data::Visitor::DEBUG();
 
 sub new {
 	my ( $class, %callbacks ) = @_;
