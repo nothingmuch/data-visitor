@@ -98,7 +98,7 @@ sub visit_object {
 	$data;
 }
 
-sub subname { $_[2] }
+sub subname { $_[1] }
 
 BEGIN {
 	eval {
