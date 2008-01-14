@@ -25,7 +25,18 @@ sub new {
 		$tied_as_objects = delete $callbacks{tied_as_objects};
 	}
 
-	my @class_callbacks = do { no strict 'refs'; grep { defined %{"${_}::"} } keys %callbacks };
+	my @class_callbacks = do {
+		no strict 'refs';
+		grep {
+			# this check can be half assed because an ->isa check will be
+			# performed later. Anything that cold plausibly be a class name
+			# should be included in the list, even if the class doesn't
+			# actually exist.
+			m{ :: | ^[A-Z] }x
+				or
+			scalar keys %{"${_}::"}
+		} keys %callbacks;
+	};
 
 	$class->SUPER::new({
 		tied_as_objects => $tied_as_objects,
