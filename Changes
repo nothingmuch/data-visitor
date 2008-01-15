@@ -1,3 +1,10 @@
+0.15
+	- Fixed a compilation warning under 5.6.2
+	- Disabled consistent replacement of values when assigning to $_ under
+	  5.6.2 due to a limitation. 5.8 is required for that feature to work
+	  properly. Instead, a warning will be issued and the value will be
+	  revisited.
+
 0.14
 	- Refactored to use Tie::ToObject instead of a custom class
 	- Simple tracing added, enable by setting $DEBUG
