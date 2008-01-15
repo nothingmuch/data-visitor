@@ -66,7 +66,10 @@ is( $visited, $visited->{foo}{bar}, "circular address" );
 
 	$c->visit( $orig );
 
-	is( $orig->[0][0], $orig->[1][0], "equality preserved" );
+	{
+		local $TODO = "broken in older perls" unless Data::Visitor::Callback::FIVE_EIGHT();
+		is( $orig->[0][0], $orig->[1][0], "equality preserved" );
+	}
 
 	isnt( $orig->[0][0], $hash, "original replaced" );
 

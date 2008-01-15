@@ -6,11 +6,13 @@ use base qw/Data::Visitor/;
 use strict;
 use warnings;
 
+use Carp qw(carp);
 use Scalar::Util qw/blessed refaddr reftype/;
 
 __PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
 
 use constant DEBUG => Data::Visitor::DEBUG();
+use constant FIVE_EIGHT => ( $] >= 5.008 );
 
 sub new {
 	my ( $class, %callbacks ) = @_;
@@ -54,15 +56,19 @@ sub visit {
 	local *_ = \$_[1]; # alias $_
 
 	if ( ref $data and exists $replaced_hash->{ refaddr($data) } ) {
-		$self->trace( mapping => replace => $data, with => $replaced_hash->{ refaddr($data) } ) if DEBUG;
-		return $_[1] = $replaced_hash->{ refaddr($data) };
-	} else {
-		my $ret = $self->SUPER::visit( $self->callback( visit => $data ) );
-
-		$replaced_hash->{ refaddr($data) } = $_ if ref $data and ( not ref $_ or refaddr($data) ne refaddr($_) );
-
-		return $ret;
+		if ( FIVE_EIGHT ) {
+			$self->trace( mapping => replace => $data, with => $replaced_hash->{ refaddr($data) } ) if DEBUG;
+			return $_[1] = $replaced_hash->{ refaddr($data) };
+		} else {
+			carp(q{Assignment of replacement value for already seen reference } . overload::StrVal($data) . q{ to container doesn't work on Perls older than 5.8, structure shape may have lost integrity.});
+		}
 	}
+
+	my $ret = $self->SUPER::visit( $self->callback( visit => $data ) );
+
+	$replaced_hash->{ refaddr($data) } = $_ if ref $data and ( not ref $_ or refaddr($data) ne refaddr($_) );
+
+	return $ret;
 }
 
 sub visit_value {
