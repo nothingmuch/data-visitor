@@ -35,7 +35,7 @@ sub _print_trace {
 	warn "@msg\n";
 }
 
-our $VERSION = "0.14";
+our $VERSION = "0.15";
 
 sub visit {
 	my ( $self, $data ) = @_;
