@@ -14,7 +14,8 @@ use Tie::ToObject;
 
 __PACKAGE__->mk_accessors(qw(tied_as_objects));
 
-use constant DEBUG => our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
+# the double not works makes this no longer undef, so exempt from useless constant warnings in older perls
+use constant DEBUG => not not our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
 
 sub trace {
 	my ( $self, $category, @msg ) = @_;
