@@ -34,9 +34,10 @@ sub new {
 			# performed later. Anything that cold plausibly be a class name
 			# should be included in the list, even if the class doesn't
 			# actually exist.
-			m{ :: | ^[A-Z] }x
+
+			m{ :: | ^[A-Z] }x # if it looks kinda lack a class name
 				or
-			scalar keys %{"${_}::"}
+			scalar keys %{"${_}::"} # or it really is a class
 		} keys %callbacks;
 	};
 
