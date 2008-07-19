@@ -41,6 +41,9 @@ sub new {
 		} keys %callbacks;
 	};
 
+	# sort from least derived to most derived
+	@class_callbacks = sort { !$a->isa($b) <=> !$b->isa($a) } @class_callbacks;
+
 	$class->SUPER::new({
 		tied_as_objects => $tied_as_objects,
 		ignore_return_values => $ignore_ret,
