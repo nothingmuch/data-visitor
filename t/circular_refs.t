@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 11;
+use Test::More tests => 12;
 
 
 use ok "Data::Visitor";
@@ -90,4 +90,26 @@ is( $visited, $visited->{foo}{bar}, "circular address" );
 	my $copy = $c->visit( $orig );
 
 	is_deeply( $copy, $orig, "structure retained" );
+}
+
+{
+	my $orig = [
+		{ obj => bless {}, "blah" },
+	];
+
+	$orig->[0]{self} = $orig;
+	$orig->[1] = $orig->[0];
+
+	my $c = Data::Visitor::Callback->new( seen => sub { "seen" } );
+
+	my $copy = $c->visit( $orig );
+
+	is_deeply(
+		$copy,
+		[
+			{ obj => bless({}, "blah"), self => "seen" },
+			"seen",
+		],
+		"seen callback",
+	);
 }

@@ -75,6 +75,19 @@ sub visit {
 	return $ret;
 }
 
+sub visit_seen {
+	my ( $self, $data, $result ) = @_;
+
+	my $mapped = $self->callback( seen => $data, $result );
+
+	no warnings 'uninitialized';
+	if ( refaddr($mapped) == refaddr($data) ) {
+		return $result;
+	} else {
+		return $mapped;
+	}
+}
+
 sub visit_value {
 	my ( $self, $data ) = @_;
 
