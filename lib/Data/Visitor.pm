@@ -81,7 +81,7 @@ sub visit_no_rec_check {
 	} elsif ( ref $data ) {
 		return $self->visit_ref($data);
 	}
-	
+
 	return $self->visit_value($data);
 }
 
