@@ -104,13 +104,7 @@ sub visit_ref {
 
 	my $method = $self->can(lc "visit_$reftype") || "visit_value";
 
-	if ( not defined wantarray ) {
-		$self->_register_mapping( $data, $data );
-		return $self->$method($data);
-	} else {
-		return $self->_register_mapping( $data, $self->$method($data) );
-	}
-
+	return $self->$method($data);
 }
 
 sub visit_value {
@@ -126,14 +120,21 @@ sub visit_hash {
 
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $hash, $hash );
-		$self->visit_hash_entries($hash);
+
+		my $tied = tied(%$hash);
+		if ( ref($tied) and $self->tied_as_objects ) {
+			$self->visit_tied($tied, $hash);
+		} else {
+			$self->visit_hash_entries($hash);
+		}
+
 		return;
 	} else {
 		my $new_hash = {};
 		$self->_register_mapping( $hash, $new_hash );
 
 		my $tied = tied(%$hash);
-		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $hash)) ) {
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $hash)) ) {
 			$self->trace( data => tying => var => $new_hash, to => $new_tied ) if DEBUG;
 			tie %$new_hash, 'Tie::ToObject', $new_tied;
 		} else {
@@ -185,14 +186,21 @@ sub visit_array {
 
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $array, $array );
-		$self->visit_array_entries($array);
+
+		my $tied = tied(@$array);
+		if ( ref($tied) and $self->tied_as_objects ) {
+			$self->visit_tied($tied, $array);
+		} else {
+			$self->visit_array_entries($array);
+		}
+
 		return;
 	} else {
 		my $new_array = [];
 		$self->_register_mapping( $array, $new_array );
 
 		my $tied = tied(@$array);
-		if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $array)) ) {
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $array)) ) {
 			$self->trace( data => tying => var => $new_array, to => $new_tied ) if DEBUG;
 			tie @$new_array, 'Data::Visitor::TieToObject', $new_tied;
 		} else {
@@ -221,18 +229,31 @@ sub visit_array_entry {
 sub visit_scalar {
 	my ( $self, $scalar ) = @_;
 
-	my $new_scalar;
-	$self->_register_mapping( $scalar, \$new_scalar );
+	if ( not defined wantarray ) {
+		$self->_register_mapping( $scalar, $scalar );
 
-	my $tied = tied($$scalar);
-	if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $scalar)) ) {
-		$self->trace( data => tying => var => $new_scalar, to => $new_tied ) if DEBUG;
-		tie $new_scalar, 'Data::Visitor::TieToObject', $new_tied;
+		my $tied = tied($$scalar);
+		if ( ref($tied) and $self->tied_as_objects ) {
+			$self->visit_tied($tied, $scalar);
+		} else {
+			$self->visit($$scalar);
+		}
+
+		return;
 	} else {
-		$new_scalar = $self->visit( $$scalar );
-	}
+		my $new_scalar;
+		$self->_register_mapping( $scalar, \$new_scalar );
 
-	return $self->retain_magic( $scalar, \$new_scalar );
+		my $tied = tied($$scalar);
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $scalar)) ) {
+			$self->trace( data => tying => var => $new_scalar, to => $new_tied ) if DEBUG;
+			tie $new_scalar, 'Data::Visitor::TieToObject', $new_tied;
+		} else {
+			$new_scalar = $self->visit( $$scalar );
+		}
+
+		return $self->retain_magic( $scalar, \$new_scalar );
+	}
 }
 
 sub visit_code {
@@ -243,20 +264,33 @@ sub visit_code {
 sub visit_glob {
 	my ( $self, $glob ) = @_;
 
-	my $new_glob = Symbol::gensym();
+	if ( not defined wantarray ) {
+		$self->_register_mapping( $glob, $glob );
 
-	$self->_register_mapping( $glob, $new_glob );
+		my $tied = tied(*$glob);
+		if ( ref($tied) and $self->tied_as_objects ) {
+			$self->visit_tied($tied, $glob);
+		} else {
+			$self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
+		}
 
-	my $tied = tied(*$glob);
-	if ( $tied and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $glob)) ) {
-		$self->trace( data => tying => var => $new_glob, to => $new_tied ) if DEBUG;
-		tie *$new_glob, 'Data::Visitor::TieToObject', $new_tied;
+		return;
 	} else {
-		no warnings 'misc'; # Undefined value assigned to typeglob
-		*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
-	}
+		my $new_glob = Symbol::gensym();
 
-	return $self->retain_magic( $glob, $new_glob );
+		$self->_register_mapping( $glob, $new_glob );
+
+		my $tied = tied(*$glob);
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $glob)) ) {
+			$self->trace( data => tying => var => $new_glob, to => $new_tied ) if DEBUG;
+			tie *$new_glob, 'Data::Visitor::TieToObject', $new_tied;
+		} else {
+			no warnings 'misc'; # Undefined value assigned to typeglob
+			*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
+		}
+
+		return $self->retain_magic( $glob, $new_glob );
+	}
 }
 
 sub retain_magic {
@@ -274,6 +308,7 @@ sub retain_magic {
 
 sub visit_tied {
 	my ( $self, $tied, $var ) = @_;
+	$self->trace( flow => visit_tied => $tied ) if DEBUG;
 	$self->visit($tied); # as an object eventually
 }
 
