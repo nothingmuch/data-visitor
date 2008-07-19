@@ -183,7 +183,7 @@ sub callback_and_reg {
 
 sub visit_tied {
 	my ( $self, $tied, @args ) = @_;
-	$self->SUPER::visit_tied( $self->callback_and_reg( tied => $tied, @args ) );
+	$self->SUPER::visit_tied( $self->callback_and_reg( tied => $tied, @args ), @args );
 }
 
 __PACKAGE__;
