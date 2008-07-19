@@ -1,3 +1,7 @@
+0.17
+	- More void context correctness fixes WRT tied values
+	- Overzealous seen value mappings made by Callback were removed
+
 0.16
 	- Fix passing of void context when visiting hashes/arrays (perf
 	  optimization to avoid unnecessary cloning)
