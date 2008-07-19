@@ -138,7 +138,14 @@ BEGIN {
 				my ( $self, $data ) = @_;
 				my $new_data = $self->callback_and_reg( '.$reftype.' => $data );
 				if ( "'.uc($reftype).'" eq (reftype($new_data)||"") ) {
-					return $self->_register_mapping( $data, $self->SUPER::visit_'.$reftype.'( $new_data ) );
+					my $visited = $self->SUPER::visit_'.$reftype.'( $new_data );
+
+					no warnings "uninitialized";
+					if ( refaddr($visited) != refaddr($data) ) {
+						return $self->_register_mapping( $data, $visited );
+					} else {
+						return $visited;
+					}
 				} else {
 					return $self->_register_mapping( $data, $self->visit( $new_data ) );
 				}
@@ -165,10 +172,13 @@ sub callback_and_reg {
 	my $new_data = $self->callback( $name, $data, @args );
 
 	unless ( $self->ignore_return_values ) {
-		return $self->_register_mapping( $data, $new_data );
-	} else {
-		return $data;
+		no warnings 'uninitialized';
+		if ( refaddr($data) != refaddr($new_data) ) {
+			return $self->_register_mapping( $data, $new_data );
+		}
 	}
+
+	return $data;
 }
 
 sub visit_tied {
