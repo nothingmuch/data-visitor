@@ -47,13 +47,18 @@ sub visit {
 	if ( ref $data ) { # only references need recursion checks
 		if ( exists $seen_hash->{ refaddr($data) } ) {
 			$self->trace( mapping => found_mapping => from => $data, to => $seen_hash->{ refaddr($data) } ) if DEBUG;
-			return $seen_hash->{ refaddr($data) }; # return whatever it was mapped to
+			return $self->visit_seen( $data, $seen_hash->{refaddr($data)} );
 		} else {
 			$self->trace( mapping => no_mapping => $data ) if DEBUG;
 		}
 	}
 
 	return $self->visit_no_rec_check( $data );
+}
+
+sub visit_seen {
+	my ( $self, $data, $result ) = @_;
+	return $result;
 }
 
 sub _get_mapping {
