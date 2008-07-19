@@ -290,6 +290,9 @@ C<object> callback.
 
 If the object C<isa> the class then the callback will fire.
 
+These callbacks are called from least derived to most derived by comparing the
+classes' C<isa> at construction time.
+
 =item object_no_class
 
 Called for every object that did not have a class callback.
