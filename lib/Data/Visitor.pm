@@ -97,12 +97,13 @@ sub visit_ref {
 
 	$reftype = "SCALAR" if $reftype =~ /^(?:REF|LVALUE|VSTRING)$/;
 
-	my $method = lc "visit_$reftype";
+	my $method = $self->can(lc "visit_$reftype") || "visit_value";
 
-	if ( $self->can($method) ) {
-		return $self->_register_mapping( $data, $self->$method($data) );
+	if ( not defined wantarray ) {
+		$self->_register_mapping( $data, $data );
+		return $self->$method($data);
 	} else {
-		return $self->_register_mapping( $data, $self->visit_value($data) );
+		return $self->_register_mapping( $data, $self->$method($data) );
 	}
 
 }
@@ -121,6 +122,7 @@ sub visit_hash {
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $hash, $hash );
 		$self->visit_hash_entries($hash);
+		return;
 	} else {
 		my $new_hash = {};
 		$self->_register_mapping( $hash, $new_hash );
@@ -139,8 +141,12 @@ sub visit_hash {
 
 sub visit_hash_entries {
 	my ( $self, $hash ) = @_;
-	no warnings 'void';
-	map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash;
+
+	if ( not defined wantarray ) {
+		$self->visit_hash_entry( $_, $hash->{$_}, $hash ) for keys %$hash;
+	} else {
+		return map { $self->visit_hash_entry( $_, $hash->{$_}, $hash ) } keys %$hash;
+	}
 }
 
 sub visit_hash_entry {
@@ -148,10 +154,15 @@ sub visit_hash_entry {
 
 	$self->trace( flow => visit_hash_entry => key => $key, value => $value ) if DEBUG;
 
-	return (
-		$self->visit_hash_key($key,$value,$hash),
-		$self->visit_hash_value($_[2],$key,$hash) # retain aliasing semantics
-	);
+	if ( not defined wantarray ) {
+		$self->visit_hash_key($key,$value,$hash);
+		$self->visit_hash_value($_[2],$key,$hash); # retain aliasing semantics
+	} else {
+		return (
+			$self->visit_hash_key($key,$value,$hash),
+			$self->visit_hash_value($_[2],$key,$hash) # retain aliasing semantics
+		);
+	}
 }
 
 sub visit_hash_key {
@@ -170,7 +181,7 @@ sub visit_array {
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $array, $array );
 		$self->visit_array_entries($array);
-		$self->visit_array_entry( $array->[$_], $_, $array ) for 0 .. $#$array
+		return;
 	} else {
 		my $new_array = [];
 		$self->_register_mapping( $array, $new_array );
@@ -189,8 +200,12 @@ sub visit_array {
 
 sub visit_array_entries {
 	my ( $self, $array ) = @_;
-	no warnings 'void';
-	map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array;
+
+	if ( not defined wantarray ) {
+		$self->visit_array_entry( $array->[$_], $_, $array ) for 0 .. $#$array;
+	} else {
+		return map { $self->visit_array_entry( $array->[$_], $_, $array ) } 0 .. $#$array;
+	}
 }
 
 sub visit_array_entry {
