@@ -203,6 +203,7 @@ Data::Visitor::Callback - A Data::Visitor with callbacks.
 	my $v = Data::Visitor::Callback->new(
 		value => sub { ... },
 		array => sub { ... },
+		object => "visit_ref", # can also use method names
 	);
 
 	$v->visit( $some_perl_value );
