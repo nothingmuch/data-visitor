@@ -1,19 +1,38 @@
 #!/usr/bin/perl
 
 package Data::Visitor::Callback;
-use base qw/Data::Visitor/;
+use Squirrel;
 
-use strict;
-use warnings;
+use Data::Visitor ();
 
 use Carp qw(carp);
 use Scalar::Util qw/blessed refaddr reftype/;
 
-__PACKAGE__->mk_accessors( qw/callbacks class_callbacks ignore_return_values/ );
+use namespace::clean -except => 'meta';
 
 use constant DEBUG => Data::Visitor::DEBUG();
 use constant FIVE_EIGHT => ( $] >= 5.008 );
 
+extends qw(Data::Visitor);
+
+has callbacks => (
+	isa => "HashRef",
+	is  => "rw",
+	default => sub { {} },
+);
+
+has class_callbacks => (
+	isa => "ArrayRef",
+	is  => "rw",
+	default => sub { [] },
+);
+
+has ignore_return_values => (
+	isa => "Bool",
+	is  => "rw",
+);
+
+# FIXME BUILDARGS
 sub new {
 	my ( $class, %callbacks ) = @_;
 
@@ -186,7 +205,9 @@ sub visit_tied {
 	$self->SUPER::visit_tied( $self->callback_and_reg( tied => $tied, @args ), @args );
 }
 
-__PACKAGE__;
+__PACKAGE__->meta->make_immutable if __PACKAGE__->meta->can("make_immutable");
+
+__PACKAGE__
 
 __END__
 

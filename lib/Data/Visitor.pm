@@ -1,10 +1,7 @@
 #!/usr/bin/perl
 
 package Data::Visitor;
-use base qw/Class::Accessor/;
-
-use strict;
-use warnings;
+use Squirrel;
 
 use Scalar::Util qw/blessed refaddr reftype/;
 use overload ();
@@ -12,10 +9,17 @@ use Symbol ();
 
 use Tie::ToObject;
 
-__PACKAGE__->mk_accessors(qw(tied_as_objects));
+use namespace::clean -except => 'meta';
 
-# the double not works makes this no longer undef, so exempt from useless constant warnings in older perls
+# the double not makes this no longer undef, so exempt from useless constant warnings in older perls
 use constant DEBUG => not not our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
+
+our $VERSION = "0.17";
+
+has tied_as_objects => (
+	isa => "Bool",
+	is  => "rw",
+);
 
 sub trace {
 	my ( $self, $category, @msg ) = @_;
@@ -34,8 +38,6 @@ sub _print_trace {
 	my ( $self, @msg ) = @_;
 	warn "@msg\n";
 }
-
-our $VERSION = "0.17";
 
 sub visit {
 	my ( $self, $data ) = @_;
@@ -312,7 +314,9 @@ sub visit_tied {
 	$self->visit($tied); # as an object eventually
 }
 
-__PACKAGE__;
+__PACKAGE__->meta->make_immutable if __PACKAGE__->meta->can("make_immutable");
+
+__PACKAGE__
 
 __END__
 
@@ -328,15 +332,21 @@ Data::Visitor - Visitor style traversal of Perl data structures
 	# You probably want to use Data::Visitor::Callback for trivial things
 
 	package FooCounter;
-	use base qw/Data::Visitor/;
+	use Mouse;
 
-	BEGIN { __PACKAGE__->mk_accessors( "number_of_foos" ) };
+	extends qw(Data::Visitor);
+
+	has number_of_foos => (
+		isa => "Int",
+		is  => "rw",
+		default => 0,
+	);
 
 	sub visit_value {
 		my ( $self, $data ) = @_;
 
 		if ( defined $data and $data eq "foo" ) {
-			$self->number_of_foos( ($self->number_of_foos || 0) + 1 );
+			$self->number_of_foos( $self->number_of_foos + 1 );
 		}
 
 		return $data;
