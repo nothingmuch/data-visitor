@@ -355,6 +355,12 @@ Called for scalar references.
 Called on the return value of C<tied> for all tied containers. Also passes in
 the variable as the second argument.
 
+=item seen
+
+Called for a reference value encountered a second time.
+
+Passes in the result mapping as the second argument.
+
 =back
 
 =head1 AUTHOR
