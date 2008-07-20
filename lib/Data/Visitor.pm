@@ -90,7 +90,14 @@ sub visit_no_rec_check {
 sub visit_object {
 	my ( $self, $object ) = @_;
 	$self->trace( flow => visit_object => $object ) if DEBUG;
-	return $self->_register_mapping( $object, $self->visit_value($object) );
+
+	if ( not defined wantarray ) {
+		$self->_register_mapping( $object, $object );
+		$self->visit_value($object);
+		return;
+	} else {
+		return $self->_register_mapping( $object, $self->visit_value($object) );
+	}
 }
 
 sub visit_ref {
