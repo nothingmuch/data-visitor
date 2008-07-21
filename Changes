@@ -1,3 +1,6 @@
+0.18
+	- Weak reference support
+
 0.17
 	- More void context correctness fixes WRT tied values
 	- Overzealous seen value mappings made by Callback were removed
