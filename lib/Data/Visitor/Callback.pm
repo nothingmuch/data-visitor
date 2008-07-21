@@ -140,6 +140,23 @@ sub visit_object {
 	$data;
 }
 
+sub visit_scalar {
+	my ( $self, $data ) = @_;
+	my $new_data = $self->callback_and_reg( scalar => $data );
+	if ( (reftype($new_data)||"") =~ /^(?: SCALAR | REF | LVALUE | VSTRING ) $/x ) {
+		my $visited = $self->SUPER::visit_scalar( $new_data );
+
+		no warnings "uninitialized";
+		if ( refaddr($visited) != refaddr($data) ) {
+			return $self->_register_mapping( $data, $visited );
+		} else {
+			return $visited;
+		}
+	} else {
+		return $self->_register_mapping( $data, $self->visit( $new_data ) );
+	}
+}
+
 sub subname { $_[1] }
 
 BEGIN {
@@ -149,7 +166,7 @@ BEGIN {
 		*subname = \&Sub::Name::subname;
 	};
 
-	foreach my $reftype ( qw/array hash glob scalar code/ ) {
+	foreach my $reftype ( qw/array hash glob code/ ) {
 		my $name = "visit_$reftype";
 		no strict 'refs';
 		*$name = subname(__PACKAGE__ . "::$name", eval '
