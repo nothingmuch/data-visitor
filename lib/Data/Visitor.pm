@@ -3,7 +3,7 @@
 package Data::Visitor;
 use Squirrel;
 
-use Scalar::Util qw/blessed refaddr reftype/;
+use Scalar::Util qw/blessed refaddr reftype weaken isweak/;
 use overload ();
 use Symbol ();
 
@@ -19,6 +19,12 @@ our $VERSION = "0.18";
 has tied_as_objects => (
 	isa => "Bool",
 	is  => "rw",
+);
+
+has weaken => (
+	isa => "Bool",
+	is  => "rw",
+	default => 1,
 );
 
 sub trace {
@@ -47,9 +53,12 @@ sub visit {
 
 	my $seen_hash = local $self->{_seen} = ($self->{_seen} || {}); # delete it after we're done with the whole visit
 	if ( ref $data ) { # only references need recursion checks
+
+		$seen_hash->{weak} ||= isweak($_[1]) if $self->weaken;
+
 		if ( exists $seen_hash->{ refaddr($data) } ) {
 			$self->trace( mapping => found_mapping => from => $data, to => $seen_hash->{ refaddr($data) } ) if DEBUG;
-			return $self->visit_seen( $data, $seen_hash->{refaddr($data)} );
+			return $self->visit_seen( $_[1], $seen_hash->{refaddr($data)} );
 		} else {
 			$self->trace( mapping => no_mapping => $data ) if DEBUG;
 		}
@@ -150,7 +159,7 @@ sub visit_hash {
 			%$new_hash = $self->visit_hash_entries($hash);
 		}
 
-		return $self->retain_magic( $hash, $new_hash );
+		return $self->retain_magic( $_[1], $new_hash );
 	}
 }
 
@@ -216,7 +225,7 @@ sub visit_array {
 			@$new_array = $self->visit_array_entries($array);
 		}
 
-		return $self->retain_magic( $array, $new_array );
+		return $self->retain_magic( $_[1], $new_array );
 	}
 }
 
@@ -261,7 +270,7 @@ sub visit_scalar {
 			$new_scalar = $self->visit( $$scalar );
 		}
 
-		return $self->retain_magic( $scalar, \$new_scalar );
+		return $self->retain_magic( $_[1], \$new_scalar );
 	}
 }
 
@@ -298,7 +307,7 @@ sub visit_glob {
 			*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
 		}
 
-		return $self->retain_magic( $glob, $new_glob );
+		return $self->retain_magic( $_[1], $new_glob );
 	}
 }
 
@@ -308,6 +317,28 @@ sub retain_magic {
 	if ( blessed($proto) and !blessed($new) ) {
 		$self->trace( data => blessing => $new, ref $proto ) if DEBUG;
 		bless $new, ref $proto;
+	}
+
+	my $seen_hash = $self->{_seen};
+	if ( $seen_hash->{weak} ) {
+		require Data::Alias;
+
+		my @weak_refs;
+		foreach my $value ( Data::Alias::deref($proto) ) {
+			if ( ref $value and isweak($value) ) {
+				push @weak_refs, refaddr $value;
+			}
+		}
+
+		if ( @weak_refs ) {
+			my %targets = map { refaddr($_) => 1 } @{ $self->{_seen} }{@weak_refs};
+			foreach my $value ( Data::Alias::deref($new) ) {
+				if ( ref $value and $targets{refaddr($value)}) {
+					push @{ $seen_hash->{weakened} ||= [] }, $value; # keep a ref around
+					weaken($value);
+				}
+			}
+		}
 	}
 
 	# FIXME real magic, too

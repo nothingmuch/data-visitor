@@ -11,6 +11,8 @@ WriteMakefile
 		'Test::More'       => '0',
 		'Test::use::ok'    => '0',
 		'Tie::ToObject'    => '0.01',
+		'Data::Alias'      => '0', # deref
+		'Task::Weaken'     => '0',
 	},
 	'INSTALLDIRS' => 'site',
 	'PL_FILES'    => {},
