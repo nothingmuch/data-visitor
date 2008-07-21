@@ -16,7 +16,7 @@ use ok 'Data::Visitor';
 
 	ok( isweak($ref->{foo}), "foo is weak" );
 
-	my $v = Data::Visitor->new;
+	my $v = Data::Visitor->new( weaken => 1 );
 
 	my $copy = $v->visit($ref);
 
@@ -33,7 +33,7 @@ use ok 'Data::Visitor';
 	ok(  isweak($ref->{foo}), "foo is weak" );
 	ok( !isweak($ref->{bar}), "bar is not weak" );
 
-	my $v = Data::Visitor->new;
+	my $v = Data::Visitor->new( weaken => 1 );
 
 	my $copy = $v->visit($ref);
 

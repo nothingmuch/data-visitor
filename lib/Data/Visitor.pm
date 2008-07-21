@@ -21,10 +21,11 @@ has tied_as_objects => (
 	is  => "rw",
 );
 
+# currently broken
 has weaken => (
 	isa => "Bool",
 	is  => "rw",
-	default => 1,
+	default => 0,
 );
 
 sub trace {
