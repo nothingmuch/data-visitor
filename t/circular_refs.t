@@ -3,8 +3,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 12;
+use Test::More tests => 18;
 
+use Scalar::Util qw(refaddr);
 
 use ok "Data::Visitor";
 use ok "Data::Visitor::Callback";
@@ -114,4 +115,38 @@ use ok "Data::Visitor::Callback";
 		],
 		"seen callback",
 	);
+}
+
+{
+	my $orig = {
+		foo => { bar => 42 },
+	};
+
+	$orig->{bar} = \( $orig->{foo}{bar} );
+
+	is( refaddr($orig->{bar}), refaddr( \( $orig->{foo}{bar} ) ), "scalar ref to hash element" );
+
+	my $copy = Data::Visitor->new->visit($orig);
+
+	is_deeply( $copy, $orig, "structures eq deeply" );
+
+	local $TODO = "hash/array elements are not yet references internally";
+	is( refaddr($copy->{bar}), refaddr( \($copy->{foo}{bar}) ), "scalar ref in copy" );
+}
+
+{
+	my $orig = {
+		foo => 42,
+	};
+
+	$orig->{bar} = \( $orig->{foo} );
+
+	is( refaddr($orig->{bar}), refaddr( \( $orig->{foo} ) ), "scalar ref to sibling hash element" );
+
+	my $copy = Data::Visitor->new->visit($orig);
+
+	is_deeply( $copy, $orig, "structures eq deeply" );
+
+	local $TODO = "hash/array elements are not yet references internally";
+	is( refaddr($copy->{bar}), refaddr( \($copy->{foo}) ), "scalar ref in copy" );
 }
