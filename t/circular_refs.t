@@ -9,30 +9,32 @@ use Test::More tests => 12;
 use ok "Data::Visitor";
 use ok "Data::Visitor::Callback";
 
-my $structure = {
-	foo => {
-		bar => undef,
-	},
-};
-
-$structure->{foo}{bar} = $structure;
-
-my $o = Data::Visitor->new;
-
 {
-	alarm 1;
-	$o->visit( $structure );
-	alarm 0;
-	pass( "circular structures don't cause an endless loop" );
+	my $structure = {
+		foo => {
+			bar => undef,
+		},
+	};
+
+	$structure->{foo}{bar} = $structure;
+
+	my $o = Data::Visitor->new;
+
+	{
+		alarm 1;
+		$o->visit( $structure );
+		alarm 0;
+		pass( "circular structures don't cause an endless loop" );
+	}
+
+	is_deeply( $o->visit( $structure ), $structure, "Structure recreated" );
+
+	is( $structure, $structure->{foo}{bar}, "circular address" );
+
+	my $visited = $o->visit( $structure );
+
+	is( $visited, $visited->{foo}{bar}, "circular address" );
 }
-
-is_deeply( $o->visit( $structure ), $structure, "Structure recreated" );
-
-is( $structure, $structure->{foo}{bar}, "circular address" );
-
-my $visited = $o->visit( $structure );
-
-is( $visited, $visited->{foo}{bar}, "circular address" );
 
 {
 	my $orig = {
