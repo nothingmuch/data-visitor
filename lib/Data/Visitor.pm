@@ -221,7 +221,7 @@ sub visit_array {
 		my $tied = tied(@$array);
 		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied(@$array), $_[1])) ) {
 			$self->trace( data => tying => var => $new_array, to => $new_tied ) if DEBUG;
-			tie @$new_array, 'Data::Visitor::TieToObject', $new_tied;
+			tie @$new_array, 'Tie::ToObject', $new_tied;
 		} else {
 			@$new_array = $self->visit_array_entries($_[1]);
 		}
@@ -266,7 +266,7 @@ sub visit_scalar {
 		my $tied = tied($$scalar);
 		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied($$scalar), $_[1])) ) {
 			$self->trace( data => tying => var => $new_scalar, to => $new_tied ) if DEBUG;
-			tie $new_scalar, 'Data::Visitor::TieToObject', $new_tied;
+			tie $new_scalar, 'Tie::ToObject', $new_tied;
 		} else {
 			$new_scalar = $self->visit( $$scalar );
 		}
@@ -302,7 +302,7 @@ sub visit_glob {
 		my $tied = tied(*$glob);
 		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied(*$glob), $_[1])) ) {
 			$self->trace( data => tying => var => $new_glob, to => $new_tied ) if DEBUG;
-			tie *$new_glob, 'Data::Visitor::TieToObject', $new_tied;
+			tie *$new_glob, 'Tie::ToObject', $new_tied;
 		} else {
 			no warnings 'misc'; # Undefined value assigned to typeglob
 			*$new_glob = $self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
