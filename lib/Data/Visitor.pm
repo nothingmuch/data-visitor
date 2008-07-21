@@ -65,7 +65,7 @@ sub visit {
 		}
 	}
 
-	return $self->visit_no_rec_check( $data );
+	return $self->visit_no_rec_check( $_[1] );
 }
 
 sub visit_seen {
@@ -89,12 +89,12 @@ sub visit_no_rec_check {
 	my ( $self, $data ) = @_;
 
 	if ( blessed($data) ) {
-		return $self->visit_object($data);
+		return $self->visit_object($_[1]);
 	} elsif ( ref $data ) {
-		return $self->visit_ref($data);
+		return $self->visit_ref($_[1]);
 	}
 
-	return $self->visit_value($data);
+	return $self->visit_value($_[1]);
 }
 
 sub visit_object {
@@ -103,10 +103,10 @@ sub visit_object {
 
 	if ( not defined wantarray ) {
 		$self->_register_mapping( $object, $object );
-		$self->visit_value($object);
+		$self->visit_value($_[1]);
 		return;
 	} else {
-		return $self->_register_mapping( $object, $self->visit_value($object) );
+		return $self->_register_mapping( $object, $self->visit_value($_[1]) );
 	}
 }
 
@@ -123,7 +123,7 @@ sub visit_ref {
 
 	my $method = $self->can(lc "visit_$reftype") || "visit_value";
 
-	return $self->$method($data);
+	return $self->$method($_[1]);
 }
 
 sub visit_value {
@@ -142,9 +142,9 @@ sub visit_hash {
 
 		my $tied = tied(%$hash);
 		if ( ref($tied) and $self->tied_as_objects ) {
-			$self->visit_tied($tied, $hash);
+			$self->visit_tied(tied(%$hash), $_[1]);
 		} else {
-			$self->visit_hash_entries($hash);
+			$self->visit_hash_entries($_[1]);
 		}
 
 		return;
@@ -153,11 +153,11 @@ sub visit_hash {
 		$self->_register_mapping( $hash, $new_hash );
 
 		my $tied = tied(%$hash);
-		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $hash)) ) {
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied(%$hash), $_[1])) ) {
 			$self->trace( data => tying => var => $new_hash, to => $new_tied ) if DEBUG;
 			tie %$new_hash, 'Tie::ToObject', $new_tied;
 		} else {
-			%$new_hash = $self->visit_hash_entries($hash);
+			%$new_hash = $self->visit_hash_entries($_[1]);
 		}
 
 		return $self->retain_magic( $_[1], $new_hash );
@@ -181,11 +181,11 @@ sub visit_hash_entry {
 
 	if ( not defined wantarray ) {
 		$self->visit_hash_key($key,$value,$hash);
-		$self->visit_hash_value($_[2],$key,$hash); # retain aliasing semantics
+		$self->visit_hash_value($_[2],$key,$hash);
 	} else {
 		return (
 			$self->visit_hash_key($key,$value,$hash),
-			$self->visit_hash_value($_[2],$key,$hash) # retain aliasing semantics
+			$self->visit_hash_value($_[2],$key,$hash),
 		);
 	}
 }
@@ -197,7 +197,7 @@ sub visit_hash_key {
 
 sub visit_hash_value {
 	my ( $self, $value, $key, $hash ) = @_;
-	$self->visit($_[1]); # retain it's aliasing semantics
+	$self->visit($_[1]);
 }
 
 sub visit_array {
@@ -208,9 +208,9 @@ sub visit_array {
 
 		my $tied = tied(@$array);
 		if ( ref($tied) and $self->tied_as_objects ) {
-			$self->visit_tied($tied, $array);
+			$self->visit_tied(tied(@$array), $_[1]);
 		} else {
-			$self->visit_array_entries($array);
+			$self->visit_array_entries($_[1]);
 		}
 
 		return;
@@ -219,11 +219,11 @@ sub visit_array {
 		$self->_register_mapping( $array, $new_array );
 
 		my $tied = tied(@$array);
-		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $array)) ) {
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied(@$array), $_[1])) ) {
 			$self->trace( data => tying => var => $new_array, to => $new_tied ) if DEBUG;
 			tie @$new_array, 'Data::Visitor::TieToObject', $new_tied;
 		} else {
-			@$new_array = $self->visit_array_entries($array);
+			@$new_array = $self->visit_array_entries($_[1]);
 		}
 
 		return $self->retain_magic( $_[1], $new_array );
@@ -253,7 +253,7 @@ sub visit_scalar {
 
 		my $tied = tied($$scalar);
 		if ( ref($tied) and $self->tied_as_objects ) {
-			$self->visit_tied($tied, $scalar);
+			$self->visit_tied(tied($$scalar), $_[1]);
 		} else {
 			$self->visit($$scalar);
 		}
@@ -264,7 +264,7 @@ sub visit_scalar {
 		$self->_register_mapping( $scalar, \$new_scalar );
 
 		my $tied = tied($$scalar);
-		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $scalar)) ) {
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied($$scalar), $_[1])) ) {
 			$self->trace( data => tying => var => $new_scalar, to => $new_tied ) if DEBUG;
 			tie $new_scalar, 'Data::Visitor::TieToObject', $new_tied;
 		} else {
@@ -277,7 +277,7 @@ sub visit_scalar {
 
 sub visit_code {
 	my ( $self, $code ) = @_;
-	$self->visit_value($code);
+	$self->visit_value($_[1]);
 }
 
 sub visit_glob {
@@ -288,7 +288,7 @@ sub visit_glob {
 
 		my $tied = tied(*$glob);
 		if ( ref($tied) and $self->tied_as_objects ) {
-			$self->visit_tied($tied, $glob);
+			$self->visit_tied(tied(*$glob), $_[1]);
 		} else {
 			$self->visit( *$glob{$_} || next ) for qw/SCALAR ARRAY HASH/;
 		}
@@ -300,7 +300,7 @@ sub visit_glob {
 		$self->_register_mapping( $glob, $new_glob );
 
 		my $tied = tied(*$glob);
-		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied($tied, $glob)) ) {
+		if ( ref($tied) and $self->tied_as_objects and blessed(my $new_tied = $self->visit_tied(tied(*$glob), $_[1])) ) {
 			$self->trace( data => tying => var => $new_glob, to => $new_tied ) if DEBUG;
 			tie *$new_glob, 'Data::Visitor::TieToObject', $new_tied;
 		} else {
@@ -350,7 +350,7 @@ sub retain_magic {
 sub visit_tied {
 	my ( $self, $tied, $var ) = @_;
 	$self->trace( flow => visit_tied => $tied ) if DEBUG;
-	$self->visit($tied); # as an object eventually
+	$self->visit($_[1]); # as an object eventually
 }
 
 __PACKAGE__->meta->make_immutable if __PACKAGE__->meta->can("make_immutable");
