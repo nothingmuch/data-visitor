@@ -32,19 +32,14 @@ has ignore_return_values => (
 	is  => "rw",
 );
 
-# FIXME BUILDARGS
-sub new {
-	my ( $class, %callbacks ) = @_;
+sub BUILDARGS {
+	my ( $class, @args ) = @_;
 
-	my $ignore_ret = 0;
-	if	( exists $callbacks{ignore_return_values} ) {
-		$ignore_ret = delete $callbacks{ignore_return_values};
-	}
+	my $args = $class->SUPER::BUILDARGS(@args);
 
-	my $tied_as_objects = 0;
-	if ( exists $callbacks{tied_as_objects} ) {
-		$tied_as_objects = delete $callbacks{tied_as_objects};
-	}
+	my %init_args = map { $_->init_arg => undef } $class->meta->compute_all_applicable_attributes;
+
+	my %callbacks = map { $_ => $args->{$_} } grep { not exists $init_args{$_} } keys %$args;
 
 	my @class_callbacks = do {
 		no strict 'refs';
@@ -63,12 +58,11 @@ sub new {
 	# sort from least derived to most derived
 	@class_callbacks = sort { !$a->isa($b) <=> !$b->isa($a) } @class_callbacks;
 
-	$class->SUPER::new({
-		tied_as_objects => $tied_as_objects,
-		ignore_return_values => $ignore_ret,
-		callbacks => \%callbacks,
+	return {
+		%$args,
+		callbacks       => \%callbacks,
 		class_callbacks => \@class_callbacks,
-	});
+	};
 }
 
 sub visit {
