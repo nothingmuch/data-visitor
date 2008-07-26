@@ -47,25 +47,32 @@ sub _print_trace {
 }
 
 sub visit {
-	my ( $self, $data ) = @_;
+	my $self = shift;
 
 	local $self->{depth} = (($self->{depth}||0) + 1) if DEBUG;
-	$self->trace( flow => visit => $data ) if DEBUG;
-
 	my $seen_hash = local $self->{_seen} = ($self->{_seen} || {}); # delete it after we're done with the whole visit
-	if ( ref $data ) { # only references need recursion checks
 
-		$seen_hash->{weak} ||= isweak($_[1]) if $self->weaken;
+	my @ret;
 
-		if ( exists $seen_hash->{ refaddr($data) } ) {
-			$self->trace( mapping => found_mapping => from => $data, to => $seen_hash->{ refaddr($data) } ) if DEBUG;
-			return $self->visit_seen( $_[1], $seen_hash->{refaddr($data)} );
-		} else {
-			$self->trace( mapping => no_mapping => $data ) if DEBUG;
+	foreach my $data ( @_ ) {
+		$self->trace( flow => visit => $data ) if DEBUG;
+
+		if ( my $refaddr = ref($data) && refaddr($data) ) { # only references need recursion checks
+			$seen_hash->{weak} ||= isweak($data) if $self->weaken;
+
+			if ( exists $seen_hash->{$refaddr} ) {
+				$self->trace( mapping => found_mapping => from => $data, to => $seen_hash->{$refaddr} ) if DEBUG;
+				push @ret, $self->visit_seen( $data, $seen_hash->{$refaddr} );
+				next;
+			} else {
+				$self->trace( mapping => no_mapping => $data ) if DEBUG;
+			}
 		}
+
+		push @ret, $self->visit_no_rec_check( $data );
 	}
 
-	return $self->visit_no_rec_check( $_[1] );
+	return ( @_ == 1 ? $ret[0] : @ret );
 }
 
 sub visit_seen {
