@@ -11,7 +11,7 @@ WriteMakefile
 		'Test::More'       => '0',
 		'Test::use::ok'    => '0',
 		'Tie::ToObject'    => '0.01',
-		'Data::Alias'      => '0', # deref
+		#'Data::Alias'      => '0', # deref # FIXME broken on windows
 		'Task::Weaken'     => '0',
 	},
 	'INSTALLDIRS' => 'site',

@@ -3,7 +3,12 @@
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More;
+
+BEGIN {
+	plan skip_all => $@ unless eval { require Data::Alias; 1 };
+	plan 'no_plan';
+}
 
 use Scalar::Util qw(isweak weaken);
 
