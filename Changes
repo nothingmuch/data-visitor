@@ -1,3 +1,7 @@
+0.20
+	- Split visit_tied into methods per each reftype, to make it possible to
+	  return something that is an object but still doesn't get tied.
+
 0.19
 	- Support multiple arguments to visit()
 	- use BUILDARGS for argument processing
