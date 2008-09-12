@@ -14,7 +14,7 @@ use namespace::clean -except => 'meta';
 # the double not makes this no longer undef, so exempt from useless constant warnings in older perls
 use constant DEBUG => not not our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
 
-our $VERSION = "0.19";
+our $VERSION = "0.20";
 
 has tied_as_objects => (
 	isa => "Bool",
