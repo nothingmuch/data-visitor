@@ -87,11 +87,17 @@ sub visit {
 			}
 		}
 
-		my $ret = $self->SUPER::visit( $self->callback( visit => $data ) );
+		my $ret;
+
+		if ( defined wantarray ) {
+			$ret = $self->SUPER::visit( $self->callback( visit => $data ) );
+		} else {
+			$self->SUPER::visit( $self->callback( visit => $data ) );
+		}
 
 		$replaced_hash->{$refaddr} = $_ if $refaddr and ( not ref $_ or $refaddr ne refaddr($_) );
 
-		push @ret, $ret;
+		push @ret, $ret if defined wantarray;
 	}
 
 	return ( @_ == 1 ? $ret[0] : @ret );

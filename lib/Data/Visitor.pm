@@ -69,7 +69,11 @@ sub visit {
 			}
 		}
 
-		push @ret, $self->visit_no_rec_check( $data );
+		if ( defined wantarray ) {
+			push @ret, scalar($self->visit_no_rec_check($data));
+		} else {
+			$self->visit_no_rec_check($data);
+		}
 	}
 
 	return ( @_ == 1 ? $ret[0] : @ret );
