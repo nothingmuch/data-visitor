@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 31;
+use Test::More tests => 32;
 use Test::MockObject::Extends;
 
 my $m;
@@ -14,7 +14,9 @@ isa_ok(my $o = $m->new, $m);
 
 can_ok( $o, "visit" );
 
-my @things = ( "foo", 1, undef, 0, {}, [], bless({}, "Some::Class") );
+my @things = ( "foo", 1, undef, 0, {}, [], do { my $x = "blah"; \$x }, bless({}, "Some::Class") );
+
+$o->visit($_) for @things; # no explosions in void context
 
 is_deeply( $o->visit( $_ ), $_, "visit returns value unlatered" ) for @things;
 
