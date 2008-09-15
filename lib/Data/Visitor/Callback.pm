@@ -212,9 +212,13 @@ sub callback_and_reg {
 
 	unless ( $self->ignore_return_values ) {
 		no warnings 'uninitialized';
-		if ( refaddr($data) != refaddr($new_data) ) {
-			return $self->_register_mapping( $data, $new_data );
+		if ( ref $data ) {
+			if ( refaddr($data) != refaddr($new_data) ) {
+				return $self->_register_mapping( $data, $new_data );
+			}
 		}
+
+		return $new_data;
 	}
 
 	return $data;
