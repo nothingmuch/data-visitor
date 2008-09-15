@@ -1,6 +1,8 @@
 0.21
 	- Fix a bug in Data::Visitor::Callback WRT returning non reference values
 	  from callbacks (#38306).
+	- Refactor the visit_tied split
+	- Propagation of void context
 
 0.20
 	- Split visit_tied into methods per each reftype, to make it possible to
