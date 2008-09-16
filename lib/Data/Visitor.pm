@@ -655,7 +655,9 @@ L<http://en.wikipedia.org/wiki/Functor>
 
 =head1 AUTHOR
 
-Yuval Kogman <nothingmuch@woobling.org>
+Yuval Kogman C<< <nothingmuch@woobling.org> >>
+
+Marcel GrE<uuml>nauer, C<< <marcel@cpan.org> >>
 
 =head1 COPYRIGHT & LICENSE
 
