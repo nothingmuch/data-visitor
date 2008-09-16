@@ -199,6 +199,32 @@ BEGIN {
 	}
 }
 
+sub visit_hash_entry {
+	my ( $self, $key, $value, $hash ) = @_;
+
+	my ( $new_key, $new_value ) = $self->callback( hash_entry => $_[1], $_[2], $_[3] );
+
+	unless ( $self->ignore_return_values ) {
+		no warnings 'uninitialized';
+		if ( ref($value) and refaddr($value) != refaddr($new_value) ) {
+			$self->_register_mapping( $value, $new_value );
+			if ( $key ne $new_key ) {
+				return $self->SUPER::visit_hash_entry($new_key, $new_value, $_[3]);
+			} else {
+				return $self->SUPER::visit_hash_entry($_[1], $new_value, $_[3]);
+			}
+		} else {
+			if ( $key ne $new_key ) {
+				return $self->SUPER::visit_hash_entry($new_key, $_[2], $_[3]);
+			} else {
+				return $self->SUPER::visit_hash_entry($_[1], $_[2], $_[3]);
+			}
+		}
+	} else {
+		return $self->SUPER::visit_hash_entry($_[1], $_[2], $_[3]);
+	}
+}
+
 sub callback {
 	my ( $self, $name, $data, @args ) = @_;
 
