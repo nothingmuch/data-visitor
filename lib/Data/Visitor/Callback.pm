@@ -204,10 +204,15 @@ sub callback {
 
 	if ( my $code = $self->callbacks->{$name} ) {
 		$self->trace( flow => callback => $name, on => $data ) if DEBUG;
-		my $ret = $self->$code( $data, @args );
-		return $self->ignore_return_values ? $data : $ret ;
+		if ( wantarray ) {
+			my @ret = $self->$code( $data, @args );
+			return $self->ignore_return_values ? ( $data, @args ) : @ret;
+		} else {
+			my $ret = $self->$code( $data, @args );
+			return $self->ignore_return_values ? $data : $ret ;
+		}
 	} else {
-		return $data;
+		return wantarray ? ( $data, @args ) : $data;
 	}
 }
 
