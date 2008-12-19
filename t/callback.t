@@ -3,35 +3,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 12;
+use Test::More tests => 13;
 
 
 my $m; use ok $m = "Data::Visitor::Callback";
 
 can_ok($m, "new");
-
-my $counters;
-my %callbacks = (
-	map {
-		my $name = $_;
-		$name => sub { $counters->{$name}++; $_[1] }
-	} qw(
-		visit
-		value
-		ref_value
-		plain_value
-		object
-		array
-		hash
-		glob
-		scalar
-		Moose
-		Mammal
-		Unrelated::Class
-	),
-);
-
-isa_ok(my $o = $m->new( %callbacks ), $m);
 
 counters_are( "foo", "string", {
 	visit => 1,
@@ -47,16 +24,19 @@ counters_are( undef, "undef", {
 
 counters_are( [], "array", {
 	visit => 1,
+	ref => 1,
 	array => 1,
 });
 
 counters_are( {}, "hash", {
 	visit => 1,
+	ref => 1,
 	hash => 1,
 });
 
 counters_are( [ "foo" ], "deep array", {
 	visit => 2,
+	ref => 1,
 	array => 1,
 	value => 1,
 	plain_value => 1,
@@ -86,6 +66,7 @@ counters_are( bless({}, "Mammal"), "object", {
 
 counters_are( \10, "scalar_ref", {
 	visit => 2,
+	ref => 1,
 	'scalar' => 1,
 	value => 1,
 	plain_value => 1,
@@ -95,6 +76,7 @@ our $FOO = 1;
 our %FOO = ( "foo" => undef );
 
 counters_are( \*FOO, "glob", {
+	ref => 3,
 	visit => 6,
 	'scalar' => 1,
 	hash => 1,
@@ -103,10 +85,51 @@ counters_are( \*FOO, "glob", {
 	'glob' => 1,
 });
 
+counters_are( sub { }, "code", {
+	visit => 1,
+	value => 1,
+	ref => 1,
+	ref_value => 1,
+});
+
+counters_are( qr/foo/, "regex", {
+	visit => 1,
+	object => 1,
+});
+
 sub counters_are {
 	my ( $data, $desc, $expected_counters ) = @_;
-	$counters = {};
-	$o->visit( $data );
+
+	my %counters;
+
+	my %callbacks = (
+		map {
+			my $name = $_;
+			$name => sub { $counters{$name}++ }
+		} qw(
+			visit
+			value
+			ref
+			ref_value
+			plain_value
+			object
+			array
+			hash
+			glob
+			scalar
+			Moose
+			Mammal
+			Unrelated::Class
+		),
+	);
+
+	my $v = $m->new(
+		ignore_return_values => 1,
+		%callbacks,
+	);
+
+	$v->visit( $data );
+
 	local $Test::Builder::Level = 2;
-	is_deeply( $counters, $expected_counters, $desc );
+	is_deeply( \%counters, $expected_counters, $desc );
 }
