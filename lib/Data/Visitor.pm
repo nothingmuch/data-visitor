@@ -9,6 +9,8 @@ use Symbol ();
 
 use Tie::ToObject;
 
+no warnings 'recursion';
+
 use namespace::clean -except => 'meta';
 
 # the double not makes this no longer undef, so exempt from useless constant warnings in older perls

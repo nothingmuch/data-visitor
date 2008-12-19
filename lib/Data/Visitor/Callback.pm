@@ -8,6 +8,8 @@ use Data::Visitor ();
 use Carp qw(carp);
 use Scalar::Util qw/blessed refaddr reftype/;
 
+no warnings 'recursion';
+
 use namespace::clean -except => 'meta';
 
 use constant DEBUG => Data::Visitor::DEBUG();
