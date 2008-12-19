@@ -103,6 +103,18 @@ sub visit {
 	return ( @_ == 1 ? $ret[0] : @ret );
 }
 
+sub visit_ref {
+	my ( $self, $data ) = @_;
+
+	my $mapped = $self->callback( ref => $data );
+
+	if ( ref $mapped ) {
+		return $self->SUPER::visit_ref($mapped);
+	} else {
+		return $self->visit($mapped);
+	}
+}
+
 sub visit_seen {
 	my ( $self, $data, $result ) = @_;
 
