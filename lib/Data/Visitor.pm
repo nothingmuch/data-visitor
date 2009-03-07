@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 package Data::Visitor;
-use Squirrel;
+use Any::Moose;
 
 use Scalar::Util qw/blessed refaddr reftype weaken isweak/;
 use overload ();

@@ -5,7 +5,7 @@ WriteMakefile
 	'NAME' => 'Data::Visitor',
 	'VERSION_FROM' => 'lib/Data/Visitor.pm',
 	'PREREQ_PM' => {
-		'Mouse'            => '0.06',
+		'Any::Moose'       => '0.04',
 		'namespace::clean' => '0.08',
 		'Test::MockObject' => '1.04',
 		'Test::More'       => '0',

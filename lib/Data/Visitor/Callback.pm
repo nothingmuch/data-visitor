@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 
 package Data::Visitor::Callback;
-use Squirrel;
+use Any::Moose;
 
 use Data::Visitor ();
 
