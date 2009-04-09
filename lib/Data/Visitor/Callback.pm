@@ -39,7 +39,7 @@ sub BUILDARGS {
 
 	my $args = $class->SUPER::BUILDARGS(@args);
 
-	my %init_args = map { $_->init_arg => undef } $class->meta->compute_all_applicable_attributes;
+	my %init_args = map { $_->init_arg => undef } $class->meta->get_all_attributes;
 
 	my %callbacks = map { $_ => $args->{$_} } grep { not exists $init_args{$_} } keys %$args;
 
