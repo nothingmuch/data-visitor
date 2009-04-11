@@ -1,3 +1,7 @@
+0.24
+	- use get_all_attributes instead of the deprecated
+	  compute_all_applicable_attributes (rafl)
+
 0.23
 	- Switch to Any::Moose
 
