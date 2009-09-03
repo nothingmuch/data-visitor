@@ -1,3 +1,7 @@
+0.26
+	- remove Any::Moose, one too many failures to subclass. When/if Mouse can be
+	  subclassed by Moose we can consider putting it back
+
 0.25
 	- Depend on Any::Moose 0.09, which pulls in Mouse 0.21, avoiding warnings
 	  related to compute_all_applicable_attributes (rafl)
