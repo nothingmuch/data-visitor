@@ -297,9 +297,28 @@ Data::Visitor::Callback - A Data::Visitor with callbacks.
 	use Data::Visitor::Callback;
 
 	my $v = Data::Visitor::Callback->new(
+		# you can provide callbacks
+		# $_ will contain the visited value
+
 		value => sub { ... },
 		array => sub { ... },
-		object => "visit_ref", # can also use method names
+
+
+		# you can also delegate to method names
+		# this specific example will force traversal on objects, by using the
+		# 'visit_ref' callback which normally traverse unblessed references
+
+		object => "visit_ref",
+
+
+		# you can also use class names as callbacks
+		# the callback will be invoked on all objects which inherit that class
+
+		'Some::Class' => sub {
+			my ( $v, $obj ) = @_; # $v is the visitor
+
+			...
+		},
 	);
 
 	$v->visit( $some_perl_value );
