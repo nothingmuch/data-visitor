@@ -7,7 +7,6 @@ WriteMakefile
 	'PREREQ_PM' => {
 		'Moose'            => '0.89',
 		'namespace::clean' => '0.08',
-		'Test::MockObject' => '1.04',
 		'Test::More'       => '0',
 		'Test::use::ok'    => '0',
 		'Tie::ToObject'    => '0.01',
