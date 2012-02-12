@@ -3,9 +3,9 @@
 use strict;
 use warnings;
 
-use Test::More tests => 10;
+use Test::More;
 
-use ok "Data::Visitor";
+use Data::Visitor;
 
 our ( $FOO, %FOO );
 
@@ -51,3 +51,5 @@ ok($called{visit_array});
 ok($called{visit_glob});
 ok($called{visit_value});
 ok($called{visit_hash});
+
+done_testing;

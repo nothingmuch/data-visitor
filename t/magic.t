@@ -3,9 +3,9 @@
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More;
 
-use ok 'Data::Visitor::Callback';
+use Data::Visitor::Callback;
 
 use Tie::RefHash;
 
@@ -83,3 +83,5 @@ sub Foo::DESTROY {} # no fail
 		}
 	}
 }
+
+done_testing;

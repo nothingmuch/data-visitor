@@ -5,14 +5,11 @@ use warnings;
 
 use Test::More;
 
-BEGIN {
-	plan skip_all => $@ unless eval { require Data::Alias; 1 };
-	plan 'no_plan';
-}
+use Test::Requires 'Data::Alias';
 
 use Scalar::Util qw(isweak weaken);
 
-use ok 'Data::Visitor';
+use Data::Visitor;
 
 {
 	my $ref = { };
@@ -47,3 +44,5 @@ use ok 'Data::Visitor';
 	is_deeply( $copy, $ref, "copy is equal" );
 	ok( ref $copy->{bar} && !isweak($copy->{bar}), 'but not in bar' );
 }
+
+done_testing;

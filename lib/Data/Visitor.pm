@@ -1,7 +1,6 @@
-#!/usr/bin/perl
-
 package Data::Visitor;
 use Moose;
+# ABSTRACT: Visitor style traversal of Perl data structures
 
 use Scalar::Util qw/blessed refaddr reftype weaken isweak/;
 use overload ();
@@ -15,8 +14,6 @@ use namespace::clean -except => 'meta';
 
 # the double not makes this no longer undef, so exempt from useless constant warnings in older perls
 use constant DEBUG => not not our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
-
-our $VERSION = "0.27";
 
 has tied_as_objects => (
 	isa => "Bool",
@@ -442,15 +439,13 @@ sub visit_tied {
 
 __PACKAGE__->meta->make_immutable if __PACKAGE__->meta->can("make_immutable");
 
-__PACKAGE__
+__PACKAGE__;
 
 __END__
 
 =pod
 
-=head1 NAME
-
-Data::Visitor - Visitor style traversal of Perl data structures
+=encoding utf8
 
 =head1 SYNOPSIS
 
@@ -655,17 +650,18 @@ L<http://en.wikipedia.org/wiki/Visitor_pattern>,
 L<http://www.ninebynine.org/Software/Learning-Haskell-Notes.html#functors>,
 L<http://en.wikipedia.org/wiki/Functor>
 
-=head1 AUTHOR
+=begin Pod::Coverage
 
-Yuval Kogman C<< <nothingmuch@woobling.org> >>
+visit_normal_array
+visit_normal_glob
+visit_normal_hash
+visit_normal_scalar
+visit_tied_array
+visit_tied_glob
+visit_tied_hash
+visit_tied_scalar
 
-Marcel GrE<uuml>nauer, C<< <marcel@cpan.org> >>
-
-=head1 COPYRIGHT & LICENSE
-
-	Copyright (c) 2006-2008 Yuval Kogman. All rights reserved
-	This program is free software; you can redistribute
-	it and/or modify it under the same terms as Perl itself.
+=end Pod::Coverage
 
 =cut
 

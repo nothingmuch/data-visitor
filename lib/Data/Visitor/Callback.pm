@@ -1,7 +1,6 @@
-#!/usr/bin/perl
-
 package Data::Visitor::Callback;
 use Moose;
+# ABSTRACT: A Data::Visitor with callbacks.
 
 use Data::Visitor ();
 
@@ -282,15 +281,13 @@ sub visit_tied {
 
 __PACKAGE__->meta->make_immutable if __PACKAGE__->meta->can("make_immutable");
 
-__PACKAGE__
+__PACKAGE__;
 
 __END__
 
 =pod
 
-=head1 NAME
-
-Data::Visitor::Callback - A Data::Visitor with callbacks.
+=encoding utf8
 
 =head1 SYNOPSIS
 
@@ -457,16 +454,14 @@ Passes in the result mapping as the second argument.
 
 =back
 
-=head1 AUTHOR
+=begin Pod::Coverage
 
-Yuval Kogman <nothingmuch@woobling.org>
+DEBUG
+FIVE_EIGHT
+callback
+callback_and_reg
+subname
 
-=head1 COPYRIGHT & LICENSE
-
-	Copyright (c) 2006 Yuval Kogman. All rights reserved
-	This program is free software; you can redistribute
-	it and/or modify it under the same terms as Perl itself.
+=end Pod::Coverage
 
 =cut
-
-

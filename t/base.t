@@ -3,13 +3,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 32;
+use Test::More;
 
-my $m;
-use ok $m = "Data::Visitor";
+use Data::Visitor;
 
-can_ok($m, "new");
-isa_ok(my $o = $m->new, $m);
+can_ok('Data::Visitor', "new");
+isa_ok(my $o = Data::Visitor->new, 'Data::Visitor');
 
 can_ok( $o, "visit" );
 
@@ -98,3 +97,4 @@ is_deeply( $mock->visit( undef ), "magic", "fmap behavior on value" );
 is_deeply( $mock->visit( { foo => "bar" } ), { foo => "magic" }, "fmap behavior on hash" );
 is_deeply( $mock->visit( [qw/la di da/]), [qw/magic magic magic/], "fmap behavior on array" );
 
+done_testing;

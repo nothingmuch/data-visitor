@@ -3,12 +3,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 18;
+use Test::More;
 
 use Scalar::Util qw(refaddr);
 
-use ok "Data::Visitor";
-use ok "Data::Visitor::Callback";
+use Data::Visitor;
+use Data::Visitor::Callback;
 
 {
 	my $structure = {
@@ -150,3 +150,5 @@ use ok "Data::Visitor::Callback";
 	local $TODO = "hash/array elements are not yet references internally";
 	is( refaddr($copy->{bar}), refaddr( \($copy->{foo}) ), "scalar ref in copy" );
 }
+
+done_testing;

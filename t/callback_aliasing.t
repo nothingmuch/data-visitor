@@ -3,10 +3,10 @@
 use strict;
 use warnings;
 
-use Test::More tests => 7;
+use Test::More;
 
 
-my $m; use ok $m = "Data::Visitor::Callback";
+use Data::Visitor::Callback;
 
 foreach my $ignore ( 0, 1 ) {
 	my $structure = {
@@ -14,7 +14,7 @@ foreach my $ignore ( 0, 1 ) {
 		gorch => [ "baz", 1 ],
 	};
 
-	my $o = $m->new(
+	my $o = Data::Visitor::Callback->new(
 		ignore_return_values => $ignore,
 		plain_value => sub { no warnings 'uninitialized'; s/b/m/g; "laaa" },
 		array => sub { $_ = 42; undef },
@@ -36,3 +36,4 @@ foreach my $ignore ( 0, 1 ) {
 	is( $structure, "value", "entire structure can also be changed");
 }
 
+done_testing;

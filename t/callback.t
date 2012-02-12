@@ -3,12 +3,12 @@
 use strict;
 use warnings;
 
-use Test::More tests => 13;
+use Test::More;
 
 
-my $m; use ok $m = "Data::Visitor::Callback";
+use Data::Visitor::Callback;
 
-can_ok($m, "new");
+can_ok('Data::Visitor::Callback', "new");
 
 counters_are( "foo", "string", {
 	visit => 1,
@@ -123,7 +123,7 @@ sub counters_are {
 		),
 	);
 
-	my $v = $m->new(
+	my $v = Data::Visitor::Callback->new(
 		ignore_return_values => 1,
 		%callbacks,
 	);
@@ -133,3 +133,5 @@ sub counters_are {
 	local $Test::Builder::Level = 2;
 	is_deeply( \%counters, $expected_counters, $desc );
 }
+
+done_testing

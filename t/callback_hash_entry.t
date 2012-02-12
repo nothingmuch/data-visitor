@@ -3,9 +3,9 @@
 use strict;
 use warnings;
 
-use Test::More 'no_plan';
+use Test::More;
 
-use ok 'Data::Visitor::Callback';
+use Data::Visitor::Callback;
 
 my $data = {
 	type_a => {
@@ -45,3 +45,4 @@ Data::Visitor::Callback->new(
 
 is($sum, 110, 'get_recursive_hash_value_visitor, only "point" keys');
 
+done_testing;
