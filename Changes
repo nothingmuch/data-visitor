@@ -1,4 +1,6 @@
 {{$NEXT}}
+
+0.28  2012-02-12
     - convert to dzil
     - bump namespace::clean dep
     - better error message if Data::Alias isn't found
