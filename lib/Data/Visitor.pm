@@ -6,6 +6,7 @@ use Scalar::Util qw/blessed refaddr reftype weaken isweak/;
 use overload ();
 use Symbol ();
 
+use Class::Load 'load_optional_class';
 use Tie::ToObject;
 
 no warnings 'recursion';
@@ -14,6 +15,8 @@ use namespace::clean -except => 'meta';
 
 # the double not makes this no longer undef, so exempt from useless constant warnings in older perls
 use constant DEBUG => not not our $DEBUG || $ENV{DATA_VISITOR_DEBUG};
+
+use constant HAS_DATA_ALIAS => load_optional_class('Data::Alias');
 
 has tied_as_objects => (
 	isa => "Bool",
@@ -406,23 +409,26 @@ sub retain_magic {
 
 	my $seen_hash = $self->{_seen};
 	if ( $seen_hash->{weak} ) {
-		require Data::Alias;
-
-		my @weak_refs;
-		foreach my $value ( Data::Alias::deref($proto) ) {
-			if ( ref $value and isweak($value) ) {
-				push @weak_refs, refaddr $value;
-			}
-		}
-
-		if ( @weak_refs ) {
-			my %targets = map { refaddr($_) => 1 } @{ $self->{_seen} }{@weak_refs};
-			foreach my $value ( Data::Alias::deref($new) ) {
-				if ( ref $value and $targets{refaddr($value)}) {
-					push @{ $seen_hash->{weakened} ||= [] }, $value; # keep a ref around
-					weaken($value);
+		if (HAS_DATA_ALIAS) {
+			my @weak_refs;
+			foreach my $value ( Data::Alias::deref($proto) ) {
+				if ( ref $value and isweak($value) ) {
+					push @weak_refs, refaddr $value;
 				}
 			}
+
+			if ( @weak_refs ) {
+				my %targets = map { refaddr($_) => 1 } @{ $self->{_seen} }{@weak_refs};
+				foreach my $value ( Data::Alias::deref($new) ) {
+					if ( ref $value and $targets{refaddr($value)}) {
+						push @{ $seen_hash->{weakened} ||= [] }, $value; # keep a ref around
+						weaken($value);
+					}
+				}
+			}
+		}
+		else {
+			die "Found a weak reference, but Data::Alias is not installed. You must install Data::Alias in order for this to work.";
 		}
 	}
 
@@ -651,6 +657,7 @@ L<http://en.wikipedia.org/wiki/Functor>
 
 =begin Pod::Coverage
 
+HAS_DATA_ALIAS
 visit_normal_array
 visit_normal_glob
 visit_normal_hash
