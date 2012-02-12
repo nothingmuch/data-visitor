@@ -1,4 +1,8 @@
 {{$NEXT}}
+    - convert to dzil
+    - bump namespace::clean dep
+    - better error message if Data::Alias isn't found
+    - doc fixes
 
 0.27
     - Improve synopsis of Data::Visitor::Callback.
