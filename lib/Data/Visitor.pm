@@ -620,8 +620,7 @@ children also fmapped.
 
 =head1 SUBCLASSING
 
-Create instance data using the L<Class::Accessor> interface. L<Data::Visitor>
-inherits L<Class::Accessor> to get a sane C<new>.
+Data::Visitor is a L<Moose> class, so it should be subclassed using Moose.
 
 Then override the callback methods in any way you like. To retain visitor
 behavior, make sure to retain the functionality of C<visit_array> and
