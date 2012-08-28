@@ -122,7 +122,7 @@ sub _build_all_does_entries {
 
 	return {
 		map { %$_ } (
-			( map { $_->all_isa_entries } @{ $self->includes } ),
+			( map { $_->all_does_entries } @{ $self->includes } ),
 			$self->does_entries,
 		),
 	};
