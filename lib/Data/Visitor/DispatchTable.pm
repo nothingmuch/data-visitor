@@ -1,10 +1,17 @@
 #!/usr/bin/perl
 
 package Data::Visitor::DispatchTable;
+BEGIN {
+  $Data::Visitor::DispatchTable::AUTHORITY = 'cpan:NUFFIN';
+}
+{
+  $Data::Visitor::DispatchTable::VERSION = '0.27';
+}
 use Moose;
 
 use MooseX::Types::Moose qw(ArrayRef HashRef Str CodeRef);
 use Moose::Util::TypeConstraints qw(duck_type);
+use UNIVERSAL::can;
 
 use Carp qw(croak);
 
@@ -12,7 +19,7 @@ use namespace::autoclean;
 
 no warnings 'recursion';
 
-has [qw(entries isa_entries)] => (
+has [qw(entries isa_entries does_entries)] => (
 	isa => HashRef[CodeRef|Str],
 	is	=> "ro",
 	lazy_build => 1,
@@ -20,8 +27,10 @@ has [qw(entries isa_entries)] => (
 
 sub _build_entries { +{} }
 sub _build_isa_entries { +{} }
+sub _build_does_entries { +{} }
+# sub all_does
 
-has [qw(all_entries all_isa_entries)] => (
+has [qw(all_entries all_isa_entries all_does_entries)] => (
 	isa => HashRef,
 	is	=> "ro",
 	lazy_build => 1,
@@ -44,9 +53,17 @@ sub _build_includes { [] }
 sub resolve {
 	my ( $self, $class ) = @_;
 
+    # check for direct match
 	if ( my $entry = $self->all_entries->{$class} || $self->all_isa_entries->{$class} ) {
 		return $entry;
 	} else {
+        # check for role consumption
+	    foreach my $role (keys %{ $self->all_does_entries }) {
+            if ($class->can('can') && $class->can('does') && $class->does($role)) {
+                return $self->all_does_entries->{$role};
+            }
+        }
+        # check for superclass
 		foreach my $superclass ( @{ $self->all_isa_entry_classes } ) {
 			if ( $class->isa($superclass) ) {
 				return $self->all_isa_entries->{$superclass};
@@ -100,6 +117,17 @@ sub _build_all_entries {
 	};
 }
 
+sub _build_all_does_entries {
+	my $self = shift;
+
+	return {
+		map { %$_ } (
+			( map { $_->all_isa_entries } @{ $self->includes } ),
+			$self->does_entries,
+		),
+	};
+}
+
 sub _build_all_isa_entries {
 	my $self = shift;
 
@@ -130,7 +158,11 @@ __END__
 
 =head1 NAME
 
-Data::Visitor::DispatchTable - cleaner dispatch table support than Data::Visitor::Callback.
+Data::Visitor::DispatchTable
+
+=head1 VERSION
+
+version 0.27
 
 =head1 SYNOPSIS
 
@@ -162,6 +194,10 @@ C<ref $object> equality) or by filtering on C<< $object->isa($class) >>
 
 Entries are anything that can be used as a method, i.e. strings used as method
 names on the visitor, or code references.
+
+=head1 NAME
+
+Data::Visitor::DispatchTable - cleaner dispatch table support than Data::Visitor::Callback.
 
 =head1 ATTRIBUTES
 
@@ -204,3 +240,26 @@ An array reference of all the classes in C<all_isa_entries>, sorted from least
 derived to most derived.
 
 =back
+
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Yuval Kogman <nothingmuch@woobling.org>
+
+=item *
+
+Marcel Grünauer <marcel@cpan.org>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2012 by Yuval Kogman.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
