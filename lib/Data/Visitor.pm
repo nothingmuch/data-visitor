@@ -9,6 +9,8 @@ use Symbol ();
 use Class::Load 'load_optional_class';
 use Tie::ToObject;
 
+use Data::Visitor::DispatchTable;
+
 no warnings 'recursion';
 
 use namespace::clean -except => 'meta';
@@ -29,6 +31,24 @@ has weaken => (
 	is  => "rw",
 	default => 0,
 );
+
+has dispatch_table => (
+	isa => "Data::Visitor::DispatchTable",
+	is  => "ro",
+	lazy_build => 1,
+);
+
+sub _build_dispatch_table {
+	Data::Visitor::DispatchTable->new;
+}
+
+has _dispatch_table_cache => (
+	isa => "HashRef",
+	is  => "ro",
+	lazy_build => 1,
+);
+
+sub _build__dispatch_table_cache { return {} }
 
 sub trace {
 	my ( $self, $category, @msg ) = @_;
@@ -98,16 +118,30 @@ sub _register_mapping {
 	$self->{_seen}{ refaddr($data) } = $new_data;
 }
 
+sub dispatch_table_entry_for {
+	my ( $self, $data ) = @_;
+
+	my $class = ref $data;
+
+	$self->_dispatch_table_cache->{$class} ||= $self->dispatch_table->resolve($class);
+}
+
 sub visit_no_rec_check {
 	my ( $self, $data ) = @_;
 
-	if ( blessed($data) ) {
-		return $self->visit_object($_[1]);
-	} elsif ( ref $data ) {
-		return $self->visit_ref($_[1]);
+	if ( ref $data ) {
+		if ( my $dispatch_entry = $self->dispatch_table_entry_for($data) ) {
+			return $self->$dispatch_entry($_[1]);
+		} else {
+			if ( blessed($data) ) {
+				return $self->visit_object($_[1]);
+			} else {
+				return $self->visit_ref($_[1]);
+			}
+		}
+	} else {
+		return $self->visit_value($_[1]);
 	}
-
-	return $self->visit_value($_[1]);
 }
 
 sub visit_object {
