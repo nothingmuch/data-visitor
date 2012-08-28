@@ -121,9 +121,7 @@ sub _register_mapping {
 sub dispatch_table_entry_for {
 	my ( $self, $data ) = @_;
 
-	my $class = ref $data;
-
-	$self->_dispatch_table_cache->{$class} ||= $self->dispatch_table->resolve($class);
+	$self->_dispatch_table_cache->{ref $data} ||= $self->dispatch_table->resolve($data);
 }
 
 sub visit_no_rec_check {

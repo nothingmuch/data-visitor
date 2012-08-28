@@ -51,7 +51,9 @@ has includes => (
 sub _build_includes { [] }
 
 sub resolve {
-	my ( $self, $class ) = @_;
+	my ( $self, $obj ) = @_;
+
+    my $class = ref $obj;
 
     # check for direct match
 	if ( my $entry = $self->all_entries->{$class} || $self->all_isa_entries->{$class} ) {
@@ -59,7 +61,7 @@ sub resolve {
 	} else {
         # check for role consumption
 	    foreach my $role (keys %{ $self->all_does_entries }) {
-            if ($class->can('can') && $class->can('does') && $class->does($role)) {
+            if (blessed $obj && $obj->can('does') && $obj->does($role)) {
                 return $self->all_does_entries->{$role};
             }
         }
