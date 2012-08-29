@@ -9,6 +9,10 @@ BEGIN {
 }
 use Moose;
 
+with (
+    'Data::Visitor::API::Dispatcher',
+);
+
 use MooseX::Types::Moose qw(ArrayRef HashRef Str CodeRef);
 use Moose::Util::TypeConstraints qw(duck_type);
 use UNIVERSAL::can;
@@ -19,31 +23,8 @@ use namespace::autoclean;
 
 no warnings 'recursion';
 
-has [qw(entries isa_entries does_entries)] => (
-	isa => HashRef[CodeRef|Str],
-	is	=> "ro",
-	lazy_build => 1,
-);
-
-sub _build_entries { +{} }
-sub _build_isa_entries { +{} }
-sub _build_does_entries { +{} }
-# sub all_does
-
-has [qw(all_entries all_isa_entries all_does_entries)] => (
-	isa => HashRef,
-	is	=> "ro",
-	lazy_build => 1,
-);
-
-has all_isa_entry_classes => (
-	isa => ArrayRef[Str],
-	is	=> "ro",
-	lazy_build => 1,
-);
-
 has includes => (
-	isa => ArrayRef[duck_type([qw(resolve)])],
+	isa => 'ArrayRef[Data::Visitor::API::Dispatcher]',
 	is	=> "ro",
 	lazy_build => 1,
 );
@@ -59,18 +40,25 @@ sub resolve {
 	if ( my $entry = $self->all_entries->{$class} || $self->all_isa_entries->{$class} ) {
 		return $entry;
 	} else {
+
         # check for role consumption
 	    foreach my $role (keys %{ $self->all_does_entries }) {
             if (blessed $obj && $obj->can('does') && $obj->does($role)) {
                 return $self->all_does_entries->{$role};
             }
         }
+
         # check for superclass
 		foreach my $superclass ( @{ $self->all_isa_entry_classes } ) {
 			if ( $class->isa($superclass) ) {
 				return $self->all_isa_entries->{$superclass};
 			}
 		}
+
+        # let included dispatchers resolve this
+        foreach my $dispatcher ( @{ $self->includes } ) {
+            last if $dispatcher->resolve( $obj );
+        }
 	}
 
 	return;
@@ -139,15 +127,6 @@ sub _build_all_isa_entries {
 			$self->isa_entries,
 		),
 	};
-}
-
-sub _build_all_isa_entry_classes {
-	my $self = shift;
-
-	return [
-		sort { !$a->isa($b) <=> !$b->isa($a) } # least derived first
-		keys %{ $self->all_isa_entries }
-	];
 }
 
 __PACKAGE__->meta->make_immutable;
